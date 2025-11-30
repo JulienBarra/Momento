@@ -1,0 +1,5 @@
+# Secrets
+.env
+
+# Platform specific
+.DS_Store
