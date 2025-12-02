@@ -1,27 +1,23 @@
 import Photo from '#models/photo'
+import { cuid } from '@adonisjs/core/helpers'
 
 export default class PhotosController {
   public async store({ request, response }) {
-    const photo = request.file('photo', {
-      size: '5mb', // 1. Restriction de TAILLE (pas plus de 5 Mo)
-      extnames: ['jpg', 'png', 'jpeg', 'webp'], // 2. Restriction de FORMAT
+    const image = request.file('photo', {
+      size: '5mb',
+      extnames: ['jpg', 'png', 'jpeg', 'webp'],
     })
 
-    if (!photo.isValid) {
-      return response.status(400).json({
-        errors: photo.errors,
-      })
+    if (!image.isValid) {
+      return response.status(400).json({ errors: image.errors })
     }
 
-    await photo.moveToDisk('uploads', {
-      name: `${new Date().getTime()}_${photo.clientName}`,
-    })
+    const key = `uploads/${cuid()}.${image.extname}`
+    await image.moveToDisk(key)
 
-    const fileName = photo.fileName
-
-    // 3. On enregistre en base de données
+    // Enregistrement en BDD
     const photoRecord = await Photo.create({
-      file_path: `uploads/${fileName}`,
+      file_path: key,
       table_id: request.input('table_id'),
       mission_id: request.input('mission_id'),
       guest_name: 'Invité Mystère',
