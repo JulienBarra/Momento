@@ -8,4 +8,5 @@ router.get('/', async () => {
   }
 })
 
+router.get('/photos', [PhotosController, 'index'])
 router.post('/photos', [PhotosController, 'store'])
