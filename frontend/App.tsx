@@ -1,62 +1,107 @@
 import { useState, useEffect } from "react";
-import { StyleSheet, View, Button, Alert } from "react-native";
+import { StyleSheet, StatusBar, LogBox, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { NavigationContainer } from "@react-navigation/native";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { Ionicons } from "@expo/vector-icons";
+
+// Tes composants
 import CameraPage from "./components/CameraPage";
-import Gallery, { Photo } from "./components/Gallery";
+import Gallery from "./components/Gallery";
+import Checklist from "./components/Checklist";
+
+LogBox.ignoreLogs(["Sending"]);
+
+const Tab = createBottomTabNavigator();
 
 export default function App() {
-  const [showGallery, setShowGallery] = useState(false);
-  const [photos, setPhotos] = useState<Photo[]>([]);
-
+  const [photos, setPhotos] = useState([]);
   const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
-  // 2. Le Chargement des Données
-  useEffect(() => {
-    // Si pas d'URL, on ne fait rien
+  const fetchPhotos = async () => {
     if (!apiUrl) return;
-
-    const fetchPhotos = async () => {
-      try {
-        // LOG 1
-        console.log("Tentative de récupération sur :", `${apiUrl}/photos`);
-        const response = await fetch(`${apiUrl}/photos`);
-        if (!response.ok) {
-          throw new Error("Erreur réseau lors de la récupération des photos");
-        }
+    try {
+      const response = await fetch(`${apiUrl}/photos?t=${Date.now()}`);
+      if (response.ok) {
         const result = await response.json();
-        console.log("Données reçues :", result);
-        // LOG 2
         setPhotos(result);
-      } catch (error) {
-        Alert.alert(
-          "Erreur",
-          "Impossible de charger les photos depuis le serveur."
-        );
       }
-    };
-
-    // On recharge les photos à chaque fois qu'on affiche la galerie
-    if (showGallery) {
-      fetchPhotos();
+    } catch (error) {
+      console.log("Erreur chargement photos");
     }
-  }, [showGallery, apiUrl]);
+  };
 
-  // 3. L'Affichage Conditionnel
+  useEffect(() => {
+    fetchPhotos();
+  }, []);
+
+  // Wrapper pour la Caméra
+  const CameraScreen = ({ navigation }) => (
+    <CameraPage
+      apiUrl={apiUrl || ""}
+      onSwitchToGallery={() => navigation.jumpTo("Galerie")} // jumpTo est mieux pour les onglets
+    />
+  );
+
+  // Wrapper pour la Galerie
+  const GalleryScreen = () => <Gallery photos={photos} />;
+
   return (
     <SafeAreaView style={styles.container}>
-      {showGallery ? (
-        // MODE GALERIE
-        <View style={{ flex: 1 }}>
-          <Gallery photos={photos} />
-          {/* Bouton pour revenir à la caméra */}
-          <Button title="Caméra" onPress={() => setShowGallery(false)} />
-        </View>
-      ) : (
-        <CameraPage
-          apiUrl={apiUrl || ""}
-          onSwitchToGallery={() => setShowGallery(true)}
-        />
-      )}
+      <StatusBar barStyle="light-content" />
+
+      <NavigationContainer>
+        <Tab.Navigator
+          initialRouteName="Camera"
+          screenOptions={{
+            headerShown: false,
+            tabBarStyle: {
+              backgroundColor: "black",
+              borderTopColor: "#333",
+              height: 60,
+              paddingBottom: 5,
+            },
+            tabBarActiveTintColor: "#ff0055",
+            tabBarInactiveTintColor: "gray",
+          }}
+        >
+          {/* Onglet Missions */}
+          <Tab.Screen
+            name="Missions"
+            component={Checklist}
+            options={{
+              tabBarIcon: ({ color }) => (
+                <Ionicons name="checkbox-outline" size={24} color={color} />
+              ),
+            }}
+          />
+
+          {/* Onglet Caméra */}
+          <Tab.Screen
+            name="Camera"
+            component={CameraScreen}
+            options={{
+              tabBarIcon: ({ color }) => (
+                <Ionicons name="camera" size={32} color={color} />
+              ),
+            }}
+          />
+
+          {/* Onglet Galerie */}
+          <Tab.Screen
+            name="Galerie"
+            component={GalleryScreen}
+            options={{
+              tabBarIcon: ({ color }) => (
+                <Ionicons name="images" size={24} color={color} />
+              ),
+            }}
+            listeners={{
+              tabPress: () => fetchPhotos(), // Recharge quand on clique
+            }}
+          />
+        </Tab.Navigator>
+      </NavigationContainer>
     </SafeAreaView>
   );
 }
@@ -64,6 +109,6 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "black", // Fond noir pour faire ressortir les photos
+    backgroundColor: "black",
   },
 });

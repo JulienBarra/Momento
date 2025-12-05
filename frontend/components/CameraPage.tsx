@@ -15,15 +15,12 @@ interface CameraPageProps {
   onSwitchToGallery: () => void;
 }
 
-export default function CameraPage({
-  apiUrl,
-  onSwitchToGallery,
-}: CameraPageProps) {
+export default function CameraPage({ apiUrl }: CameraPageProps) {
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef(null);
   const [uploading, setUploading] = useState(false);
 
-  // On gère les permissions d'abord
+  // Gère les permissions de la caméra
   if (!permission) return <View />;
 
   if (!permission.granted) {
@@ -36,7 +33,7 @@ export default function CameraPage({
   }
 
   const takeAndUploadPhoto = async () => {
-    // 1. SÉCURITÉ CONFIG : On vérifie l'URL ici, au moment du clic
+    // Vérifie l'URL au moment du clic
     if (!apiUrl) {
       Alert.alert(
         "Erreur Config",
@@ -124,9 +121,6 @@ export default function CameraPage({
           </TouchableOpacity>
         </View>
       </CameraView>
-      <View style={{ position: "absolute", top: 50, right: 20 }}>
-        <Button title="🖼️ Galerie" onPress={onSwitchToGallery} color="white" />
-      </View>
     </View>
   );
 }
