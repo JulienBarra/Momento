@@ -7,6 +7,7 @@ import {
   View,
   ActivityIndicator,
   Alert,
+  Image,
 } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 
@@ -19,6 +20,7 @@ export default function CameraPage({ apiUrl }: CameraPageProps) {
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef(null);
   const [uploading, setUploading] = useState(false);
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
 
   // Gère les permissions de la caméra
   if (!permission) return <View />;
@@ -32,40 +34,46 @@ export default function CameraPage({ apiUrl }: CameraPageProps) {
     );
   }
 
-  const takeAndUploadPhoto = async () => {
-    // Vérifie l'URL au moment du clic
-    if (!apiUrl) {
-      Alert.alert(
-        "Erreur Config",
-        "La variable EXPO_PUBLIC_API_URL est vide !"
-      );
-      return;
-    }
-
+  const takePhoto = async () => {
     if (!cameraRef.current) return;
+
+    try {
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.7,
+      });
+
+      if (photo) {
+        setPhotoUri(photo.uri);
+        console.log("Photo prise !", `URI: ${photo.uri}`);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la prise de photo:", error);
+      Alert.alert("Erreur", "Impossible de prendre la photo.");
+    }
+  };
+
+  // On accepte un mission ID ou null si c'est hors mission
+  const uploadPhoto = async (missionId: string | null) => {
+    if (!photoUri || !apiUrl) return;
     if (uploading) return;
 
     try {
       setUploading(true);
 
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.7,
-      });
-
-      if (!photo) return;
-
       const formData = new FormData();
 
       formData.append("photo", {
-        uri: photo.uri,
+        uri: photoUri,
         name: "photo_mariage.jpg",
         type: "image/jpeg",
       });
 
       formData.append("table_id", "1");
-      formData.append("mission_id", "5");
+      if (missionId) {
+        formData.append("mission_id", missionId);
+      }
 
-      console.log("Envoi vers :", `${apiUrl}/photos`); // Pour débugger
+      console.log("Envoi vers :", `${apiUrl}/photos`); // DEBUG
 
       const response = await fetch(`${apiUrl}/photos`, {
         method: "POST",
@@ -104,23 +112,52 @@ export default function CameraPage({ apiUrl }: CameraPageProps) {
 
   return (
     <View style={styles.container}>
-      <CameraView style={styles.camera} facing="back" ref={cameraRef}>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={takeAndUploadPhoto}
-            disabled={uploading}
-          >
-            {uploading ? (
-              <ActivityIndicator size="large" color="#fff" />
-            ) : (
-              <View style={styles.shutterBtn}>
-                <Text style={styles.text}>📸</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+      {photoUri ? (
+        // ------------------------------------------------
+        // CAS 1 : On a une photo -> On affiche la PREVIEW
+        // ------------------------------------------------
+        <View style={styles.container}>
+          <Image source={{ uri: photoUri }} style={styles.camera} />
+
+          {/* Les boutons de décision par-dessus */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: "red" }]}
+              onPress={() => setPhotoUri(null)}
+            >
+              <Text style={styles.text}>Retake</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: "green" }]}
+              onPress={() => uploadPhoto(null)}
+            >
+              <Text style={styles.text}>Envoyer</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </CameraView>
+      ) : (
+        // ------------------------------------------------
+        // CAS 2 : Pas de photo -> On affiche la CAMÉRA
+        // ------------------------------------------------
+        <CameraView style={styles.camera} facing="back" ref={cameraRef}>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={takePhoto}
+              disabled={uploading}
+            >
+              {uploading ? (
+                <ActivityIndicator size="large" color="#fff" />
+              ) : (
+                <View style={styles.shutterBtn}>
+                  <Text style={styles.text}>📸</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+        </CameraView>
+      )}
     </View>
   );
 }
@@ -133,7 +170,11 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     backgroundColor: "transparent",
-    marginBottom: 50,
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    marginBottom: 30,
   },
   button: {
     flex: 1,
