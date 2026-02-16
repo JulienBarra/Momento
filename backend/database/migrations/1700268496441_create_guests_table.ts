@@ -1,16 +1,16 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
 
 export default class extends BaseSchema {
-  protected tableName = 'photos'
+  protected tableName = 'guests'
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
       table.increments('id')
 
-      table.string('file_path').notNullable()
-      table.integer('table_id').nullable()
-      table.integer('mission_id').nullable()
-      table.integer('guest_id').unsigned().references('guests.id').onDelete('CASCADE')
+      table.string('nickname').notNullable() // Le pseudo de l'invité
+
+      // Lien vers la table où il est assis
+      table.integer('table_id').unsigned().references('tables.id').onDelete('CASCADE')
 
       table.timestamp('created_at')
       table.timestamp('updated_at')
