@@ -1,5 +1,7 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column } from '@adonisjs/lucid/orm'
+import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
+import type { BelongsTo } from '@adonisjs/lucid/types/relations' // <--- Il manquait cet import
+import Guest from '#models/guest'
 
 export default class Photo extends BaseModel {
   @column({ isPrimary: true })
@@ -15,7 +17,10 @@ export default class Photo extends BaseModel {
   declare mission_id: number
 
   @column()
-  declare guest_name: string
+  declare guestId: number
+
+  @belongsTo(() => Guest)
+  declare guest: BelongsTo<typeof Guest>
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
