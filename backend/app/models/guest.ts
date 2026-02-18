@@ -3,8 +3,11 @@ import { BaseModel, column, belongsTo, hasMany } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 import Table from '#models/table'
 import Photo from '#models/photo'
+import { DbAccessTokensProvider } from '@adonisjs/auth/access_tokens'
 
 export default class Guest extends BaseModel {
+  static accessTokens = DbAccessTokensProvider.forModel(Guest)
+
   @column({ isPrimary: true })
   declare id: number
 
