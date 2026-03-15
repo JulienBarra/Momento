@@ -5,7 +5,7 @@ export default function MobileLayout() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Zone de contenu principal */}
-      <main className="flex-1 p-4 pb-20 overflow-y-auto">
+      <main className="flex flex-col flex-1 overflow-y-auto">
         <Outlet />
       </main>
 
