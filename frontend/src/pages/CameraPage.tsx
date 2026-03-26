@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { Camera, X, Send, RefreshCw } from "lucide-react";
+import { X, Send, RefreshCw } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
+import { photoService } from "../services/api";
 
 export default function CameraPage() {
   // --- ÉTATS (STATES) ---
@@ -7,10 +9,14 @@ export default function CameraPage() {
   const [photo, setPhoto] = useState<string | null>(null); // Stockera l'image capturée
   const [retryCount, setRetryCount] = useState(0); // Pour forcer le re-render
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment"); // Caméra arrière par défaut
+  const [isUploading, setIsUploading] = useState(false); // État de l'upload
 
   // --- RÉFÉRENCES (REFS) ---
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // --- CONTEXTE AUTH ---
+  const { guest } = useAuth();
 
   // --- 1. GÉRER LE CYCLE DE VIE & ALLUMER LA CAMÉRA ---
   useEffect(() => {
@@ -82,11 +88,34 @@ export default function CameraPage() {
     }
   };
 
-  // --- 4. ENVOYER LA PHOTO (Pour l'instant un test) ---
-  const sendPhoto = () => {
-    alert("Bientôt, cette photo partira vers ton backend Adonis ! 🚀");
-    // On réinitialise pour la prochaine photo
-    setPhoto(null);
+  // --- 4. ENVOYER LA PHOTO ---
+  const sendPhoto = async () => {
+    if (!photo || !guest) return;
+
+    setIsUploading(true);
+
+    try {
+      // Convertir le data URL (base64) en Blob
+      const response = await fetch(photo);
+      const blob = await response.blob();
+
+      // Créer un fichier avec le bon nom et type
+      const file = new File([blob], `photo-${Date.now()}.webp`, {
+        type: "image/webp",
+      });
+
+      // Upload vers le backend
+      await photoService.upload(file, guest.tableId);
+
+      // Succès : on réinitialise pour la prochaine photo
+      alert("Photo envoyée avec succès ! 📸");
+      setPhoto(null);
+    } catch (error) {
+      console.error("Erreur lors de l'upload:", error);
+      alert("Erreur lors de l'envoi de la photo. Réessayez.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   // --- AFFICHAGE ---
@@ -166,9 +195,19 @@ export default function CameraPage() {
           </button>
           <button
             onClick={sendPhoto}
-            className="bg-momento text-white px-6 py-3 rounded-full flex items-center gap-2 font-bold shadow-xl shadow-momento/40"
+            disabled={isUploading}
+            className="bg-momento text-white px-6 py-3 rounded-full flex items-center gap-2 font-bold shadow-xl shadow-momento/40 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Send size={20} /> Envoyer
+            {isUploading ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Envoi...
+              </>
+            ) : (
+              <>
+                <Send size={20} /> Envoyer
+              </>
+            )}
           </button>
         </div>
       )}
