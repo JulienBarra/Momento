@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 import WelcomeCard from "./components/WelcomeCard";
 import MobileLayout from "./components/MobileLayout";
 import Gallery from "./pages/Gallery";
@@ -11,7 +12,7 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* La route pour scanner le QR Code (hors de la navigation) */}
+          {/* Route publique pour scanner le QR Code */}
           <Route
             path="/join"
             element={
@@ -21,11 +22,13 @@ function App() {
             }
           />
 
-          {/* Le groupe de routes de l'application (avec la barre de navigation en bas) */}
-          <Route element={<MobileLayout />}>
-            <Route path="/" element={<Gallery />} />
-            <Route path="/camera" element={<CameraPage />} />
-            <Route path="/missions" element={<Missions />} />
+          {/* Routes protégées - nécessitent une authentification */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<MobileLayout />}>
+              <Route path="/" element={<Gallery />} />
+              <Route path="/camera" element={<CameraPage />} />
+              <Route path="/missions" element={<Missions />} />
+            </Route>
           </Route>
         </Routes>
       </BrowserRouter>
