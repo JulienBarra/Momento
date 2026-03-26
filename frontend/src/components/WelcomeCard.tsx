@@ -1,54 +1,56 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function WelcomeCard() {
   const [name, setName] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // Pour le bouton de chargement
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { login, isAuthenticated } = useAuth();
+
+  // Si déjà authentifié, rediriger vers la galerie
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Empêche la page de se recharger
+    e.preventDefault();
+    setError(null);
 
-    if (!name.trim()) return; // On ne fait rien si le champ est vide
+    if (!name.trim()) return;
+
+    // Récupérer tableId et signature depuis l'URL
+    const tableIdParam = searchParams.get("tableId");
+    const signature = searchParams.get("signature");
+
+    if (!tableIdParam || !signature) {
+      setError(
+        "Lien invalide. Veuillez scanner le QR Code présent sur votre table."
+      );
+      return;
+    }
+
+    const tableId = parseInt(tableIdParam, 10);
+    if (isNaN(tableId)) {
+      setError("ID de table invalide.");
+      return;
+    }
 
     setIsLoading(true);
 
     try {
-      // 1. On va chercher l'URL sécurisée dans la barre d'adresse
-      const searchParams = new URLSearchParams(window.location.search);
-      const apiUrl = searchParams.get("api_url");
-
-      if (!apiUrl) {
-        alert(
-          "Lien invalide. Veuillez scanner le QR Code présent sur votre table.",
-        );
-        setIsLoading(false);
-        return;
-      }
-
-      // 2. On envoie la requête au Backend
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({ nickname: name }),
-      });
-
-      const data = await response.json();
-
-      // 3. On vérifie si le serveur a accepté
-      if (response.ok) {
-        // C'est un succès ! On sauvegarde le token dans la mémoire du navigateur
-        localStorage.setItem("momento_token", data.token);
-        alert(`Bienvenue ${data.guest.nickname} ! 🎉`);
-
-        // La prochaine étape sera de cacher cette carte et d'afficher la galerie !
-      } else {
-        alert(data.error || "Une erreur est survenue.");
-      }
-    } catch (error) {
-      console.error("Erreur de connexion :", error);
-      alert("Impossible de joindre le serveur.");
+      await login(tableId, signature, name.trim());
+      // Redirection automatique vers la galerie via useEffect
+    } catch (err) {
+      console.error("Erreur de connexion:", err);
+      setError(
+        "Impossible de se connecter. Vérifiez que le QR Code est valide."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -63,6 +65,12 @@ export default function WelcomeCard() {
       <p className="text-black/70 mb-8">
         Entrez votre prénom pour rejoindre la galerie.
       </p>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+          {error}
+        </div>
+      )}
 
       <input
         type="text"
