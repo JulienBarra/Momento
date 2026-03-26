@@ -10,6 +10,10 @@ export default function CameraPage() {
   const [retryCount, setRetryCount] = useState(0); // Pour forcer le re-render
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment"); // Caméra arrière par défaut
   const [isUploading, setIsUploading] = useState(false); // État de l'upload
+  const [selectedMission, setSelectedMission] = useState<{
+    id: number;
+    title: string;
+  } | null>(null);
 
   // --- RÉFÉRENCES (REFS) ---
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -17,6 +21,15 @@ export default function CameraPage() {
 
   // --- CONTEXTE AUTH ---
   const { guest } = useAuth();
+
+  // --- RÉCUPÉRER LA MISSION SÉLECTIONNÉE ---
+  useEffect(() => {
+    const missionStr = localStorage.getItem("selected_mission");
+    if (missionStr) {
+      const mission = JSON.parse(missionStr);
+      setSelectedMission({ id: mission.id, title: mission.title });
+    }
+  }, []);
 
   // --- 1. GÉRER LE CYCLE DE VIE & ALLUMER LA CAMÉRA ---
   useEffect(() => {
@@ -104,11 +117,26 @@ export default function CameraPage() {
         type: "image/webp",
       });
 
-      // Upload vers le backend
-      await photoService.upload(file, guest.tableId);
+      // Récupérer la mission sélectionnée si elle existe
+      const selectedMissionStr = localStorage.getItem("selected_mission");
+      const missionId = selectedMissionStr
+        ? JSON.parse(selectedMissionStr).id
+        : undefined;
+
+      // Upload vers le backend avec ou sans mission
+      await photoService.upload(file, guest.tableId, missionId);
+
+      // Message de succès personnalisé
+      const successMessage = missionId
+        ? `Photo envoyée avec succès ! 📸\nMission "${selectedMission?.title}" accomplie !`
+        : "Photo envoyée avec succès ! 📸";
+
+      // Nettoyer la mission sélectionnée après l'upload
+      localStorage.removeItem("selected_mission");
+      setSelectedMission(null);
 
       // Succès : on réinitialise pour la prochaine photo
-      alert("Photo envoyée avec succès ! 📸");
+      alert(successMessage);
       setPhoto(null);
     } catch (error) {
       console.error("Erreur lors de l'upload:", error);
@@ -157,6 +185,15 @@ export default function CameraPage() {
           alt="Aperçu"
           className="w-full h-full object-cover"
         />
+      )}
+
+      {/* Badge mission sélectionnée (visible en mode caméra) */}
+      {!photo && selectedMission && (
+        <div className="absolute top-6 left-6 right-20 bg-white/90 backdrop-blur-md rounded-full px-4 py-2 shadow-lg">
+          <p className="text-black text-sm font-medium truncate">
+            🎯 {selectedMission.title}
+          </p>
+        </div>
       )}
 
       {/* Boutons en mode caméra */}
