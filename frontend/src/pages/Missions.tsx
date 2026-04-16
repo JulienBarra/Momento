@@ -1,31 +1,21 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { missionService } from "../services/api";
 import type { Mission } from "../services/api";
 import { Camera, Globe, Users } from "lucide-react";
+import { mockMissions } from "../data/mockData";
 
 export default function Missions() {
   const [missions, setMissions] = useState<Mission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  // Charger les missions au montage
+  // Charger les missions fictives au montage
   useEffect(() => {
-    const loadMissions = async () => {
-      try {
-        setIsLoading(true);
-        const data = await missionService.getAll();
-        setMissions(data);
-      } catch (err) {
-        console.error("Erreur lors du chargement des missions:", err);
-        setError("Impossible de charger les missions.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadMissions();
+    // Simuler un délai de chargement
+    setTimeout(() => {
+      setMissions(mockMissions);
+      setIsLoading(false);
+    }, 500);
   }, []);
 
   const handleMissionClick = (mission: Mission) => {
@@ -42,18 +32,6 @@ export default function Missions() {
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-momento border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-500">Chargement des missions...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // État d'erreur
-  if (error) {
-    return (
-      <div className="p-4">
-        <h1 className="text-2xl font-bold text-black mb-4">Missions 🎯</h1>
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600">
-          {error}
         </div>
       </div>
     );
