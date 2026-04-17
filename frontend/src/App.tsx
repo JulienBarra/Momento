@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { CameraProvider } from "./contexts/CameraContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import WelcomeCard from "./components/WelcomeCard";
 import MobileLayout from "./components/MobileLayout";
@@ -24,7 +25,13 @@ function App() {
 
           {/* Routes protégées - nécessitent une authentification */}
           <Route element={<ProtectedRoute />}>
-            <Route element={<MobileLayout />}>
+            <Route
+              element={
+                <CameraProvider>
+                  <MobileLayout />
+                </CameraProvider>
+              }
+            >
               <Route path="/" element={<Gallery />} />
               <Route path="/camera" element={<CameraPage />} />
               <Route path="/missions" element={<Missions />} />

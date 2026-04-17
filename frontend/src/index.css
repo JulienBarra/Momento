@@ -2,4 +2,53 @@
 
 @theme {
   --color-momento: #71a36d;
+  --font-family-title: "Imperial Script", cursive;
+}
+
+/* Classe pour les titres avec la font manuscrite */
+.font-title {
+  font-family: var(--font-family-title);
+}
+
+/* Animation flash pour la prise de photo */
+@keyframes flash {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Animation slide-up pour la bottom sheet */
+@keyframes slide-up {
+  0% {
+    transform: translateY(100%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* Animation fade-in pour le preview photo */
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out both;
+}
+
+/* Animation flash pour CameraPage */
+.animate-flash {
+  animation: flash 0.3s ease-out;
 }

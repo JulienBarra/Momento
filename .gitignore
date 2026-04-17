@@ -1,5 +1,8 @@
 # Secrets
 .env
 
+# Claude Code
+CLAUDE.md
+
 # Platform specific
 .DS_Store
