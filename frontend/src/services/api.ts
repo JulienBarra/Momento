@@ -58,9 +58,9 @@ export interface LoginResponse {
 
 export interface Photo {
   id: number;
-  file_path: string;
-  table_id: number | null;
-  mission_id: number | null;
+  filePath: string;
+  tableId: number | null;
+  missionId: number | null;
   guestId: number;
   createdAt: string;
   updatedAt: string;

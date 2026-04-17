@@ -12,8 +12,8 @@ export default function PhotoGrid({ photos, onPhotoClick, getMissionTitle, isMis
   return (
     <div className="grid grid-cols-2 gap-3">
       {photos.map((photo) => {
-        const missionTitle = getMissionTitle(photo.mission_id);
-        const isGlobal = isMissionGlobal(photo.mission_id);
+        const missionTitle = getMissionTitle(photo.missionId);
+        const isGlobal = isMissionGlobal(photo.missionId);
 
         return (
           <button
@@ -23,7 +23,7 @@ export default function PhotoGrid({ photos, onPhotoClick, getMissionTitle, isMis
           >
             {/* Image */}
             <img
-              src={photo.file_path}
+              src={photo.filePath}
               alt={`Photo par ${photo.guest?.nickname || "Anonyme"}`}
               className="w-full h-full object-cover"
               loading="lazy"
