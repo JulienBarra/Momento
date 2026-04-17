@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import type { Photo } from "../services/api";
-import { mockPhotos, mockMissions, mockTables } from "../data/mockData";
+import type { Photo, Mission } from "../services/api";
+import { photoService, missionService, getPhotoUrl } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import PhotoGrid from "../components/PhotoGrid";
 import PhotoModal from "../components/PhotoModal";
@@ -13,7 +13,10 @@ type FilterType =
   | "spontaneous";
 
 export default function Gallery() {
-  const [photos] = useState<Photo[]>(mockPhotos);
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [missions, setMissions] = useState<Mission[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>("all");
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [displayCount, setDisplayCount] = useState(6);
@@ -22,6 +25,42 @@ export default function Gallery() {
 
   // Référence pour le détecteur de scroll infini
   const observerTarget = useRef<HTMLDivElement>(null);
+
+  // Charger les photos et missions depuis l'API
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchData() {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const [photosData, missionsData] = await Promise.all([
+          photoService.getAll(),
+          missionService.getAll(),
+        ]);
+        if (!cancelled) {
+          // Transformer les filePath en URLs S3 complètes
+          const photosWithUrls = photosData.map((p) => ({
+            ...p,
+            filePath: getPhotoUrl(p.filePath),
+          }));
+          setPhotos(photosWithUrls);
+          setMissions(missionsData);
+        }
+      } catch {
+        if (!cancelled) {
+          setError("Impossible de charger les photos");
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    fetchData();
+    return () => { cancelled = true; };
+  }, []);
 
   // Détecter le scroll pour afficher/masquer le bouton "Remonter"
   useEffect(() => {
@@ -37,18 +76,18 @@ export default function Gallery() {
   // Fonction pour vérifier si une photo correspond au filtre
   const isPhotoMatchingFilter = (photo: Photo, currentFilter: FilterType) => {
     if (currentFilter === "all") return true;
-    if (currentFilter === "my-table") return photo.table_id === guest?.tableId;
+    if (currentFilter === "my-table") return photo.tableId === guest?.tableId;
     if (currentFilter === "global-missions") {
-      if (!photo.mission_id) return false;
-      const mission = mockMissions.find((m) => m.id === photo.mission_id);
+      if (!photo.missionId) return false;
+      const mission = missions.find((m) => m.id === photo.missionId);
       return mission?.isGlobal === true;
     }
     if (currentFilter === "table-missions") {
-      if (!photo.mission_id) return false;
-      const mission = mockMissions.find((m) => m.id === photo.mission_id);
+      if (!photo.missionId) return false;
+      const mission = missions.find((m) => m.id === photo.missionId);
       return mission?.isGlobal === false;
     }
-    if (currentFilter === "spontaneous") return photo.mission_id === null;
+    if (currentFilter === "spontaneous") return photo.missionId === null;
     return true;
   };
 
@@ -56,20 +95,20 @@ export default function Gallery() {
   const filterCounts = useMemo(() => {
     return {
       all: photos.length,
-      "my-table": photos.filter((p) => p.table_id === guest?.tableId).length,
+      "my-table": photos.filter((p) => p.tableId === guest?.tableId).length,
       "global-missions": photos.filter((p) => {
-        if (!p.mission_id) return false;
-        const mission = mockMissions.find((m) => m.id === p.mission_id);
+        if (!p.missionId) return false;
+        const mission = missions.find((m) => m.id === p.missionId);
         return mission?.isGlobal === true;
       }).length,
       "table-missions": photos.filter((p) => {
-        if (!p.mission_id) return false;
-        const mission = mockMissions.find((m) => m.id === p.mission_id);
+        if (!p.missionId) return false;
+        const mission = missions.find((m) => m.id === p.missionId);
         return mission?.isGlobal === false;
       }).length,
-      spontaneous: photos.filter((p) => p.mission_id === null).length,
+      spontaneous: photos.filter((p) => p.missionId === null).length,
     };
-  }, [photos, guest?.tableId]);
+  }, [photos, missions, guest?.tableId]);
 
   // Filtrer les photos selon le filtre actuel
   const filteredPhotos = photos.filter((photo) =>
@@ -111,17 +150,17 @@ export default function Gallery() {
   // Fonctions utilitaires
   const getMissionTitle = (missionId: number | null) => {
     if (!missionId) return null;
-    return mockMissions.find((m) => m.id === missionId)?.title || null;
+    return missions.find((m) => m.id === missionId)?.title || null;
   };
 
   const isMissionGlobal = (missionId: number | null) => {
     if (!missionId) return null;
-    return mockMissions.find((m) => m.id === missionId)?.isGlobal ?? null;
+    return missions.find((m) => m.id === missionId)?.isGlobal ?? null;
   };
 
   const getTableName = (tableId: number | null) => {
     if (!tableId) return null;
-    return mockTables.find((t) => t.id === tableId)?.name || null;
+    return `Table ${tableId}`;
   };
 
   const handleFilterChange = (newFilter: FilterType) => {
@@ -133,6 +172,38 @@ export default function Gallery() {
   const getFilterCount = (filterType: FilterType): number => {
     return filterCounts[filterType];
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-4 pb-20">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-black">Galerie</h1>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="w-8 h-8 border-3 border-momento border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 pb-20">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-black">Galerie</h1>
+        </div>
+        <div className="text-center py-12">
+          <p className="text-gray-500 text-lg mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-momento text-white px-6 py-2 rounded-full font-semibold"
+          >
+            Réessayer
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 pb-20">

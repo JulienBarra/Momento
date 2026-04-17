@@ -1,12 +1,42 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Camera, Globe, Users, Heart, ChevronRight } from "lucide-react";
-import { mockMissions, mockTables } from "../data/mockData";
+import type { Mission } from "../services/api";
+import { missionService } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function Missions() {
   const navigate = useNavigate();
   const { guest } = useAuth();
-  const missions = mockMissions;
+  const [missions, setMissions] = useState<Mission[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchMissions() {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await missionService.getAll();
+        if (!cancelled) {
+          setMissions(data);
+        }
+      } catch {
+        if (!cancelled) {
+          setError("Impossible de charger les missions");
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    fetchMissions();
+    return () => { cancelled = true; };
+  }, []);
 
   const handleMissionClick = (mission: Mission) => {
     localStorage.setItem("selected_mission", JSON.stringify(mission));
@@ -17,6 +47,34 @@ export default function Missions() {
     localStorage.removeItem("selected_mission");
     navigate("/camera");
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-4 pb-20 animate-fade-in">
+        <h1 className="text-3xl font-bold text-black mb-6">Missions</h1>
+        <div className="flex items-center justify-center py-12">
+          <div className="w-8 h-8 border-3 border-momento border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 pb-20 animate-fade-in">
+        <h1 className="text-3xl font-bold text-black mb-6">Missions</h1>
+        <div className="text-center py-12">
+          <p className="text-gray-500 text-lg mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-momento text-white px-6 py-2 rounded-full font-semibold"
+          >
+            Réessayer
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Aucune mission
   if (missions.length === 0) {
@@ -122,8 +180,7 @@ export default function Missions() {
         <div>
           <div className="pb-2">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              {mockTables.find((t) => t.id === guest?.tableId)?.name ??
-                "Votre table"}
+              Table {guest?.tableId ?? ""}
             </p>
           </div>
           <div className="space-y-3">
@@ -144,8 +201,7 @@ export default function Missions() {
                     <p className="text-black font-semibold">{mission.title}</p>
                     <span className="inline-flex items-center gap-1 text-xs text-purple-600 mt-1">
                       <Users size={10} />
-                      {mockTables.find((t) => t.id === mission.tableId)?.name ??
-                        `Table ${mission.tableId}`}
+                      Table {mission.tableId}
                     </span>
                   </div>
                   <ChevronRight

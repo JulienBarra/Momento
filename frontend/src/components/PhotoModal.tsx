@@ -10,9 +10,9 @@ interface PhotoModalProps {
 }
 
 export default function PhotoModal({ photo, onClose, getMissionTitle, isMissionGlobal, getTableName }: PhotoModalProps) {
-  const missionTitle = getMissionTitle(photo.mission_id);
-  const isGlobal = isMissionGlobal(photo.mission_id);
-  const tableName = getTableName(photo.table_id);
+  const missionTitle = getMissionTitle(photo.missionId);
+  const isGlobal = isMissionGlobal(photo.missionId);
+  const tableName = getTableName(photo.tableId);
 
   return (
     <div
@@ -35,7 +35,7 @@ export default function PhotoModal({ photo, onClose, getMissionTitle, isMissionG
         {/* Image */}
         <div className="relative aspect-square bg-gray-100">
           <img
-            src={photo.file_path}
+            src={photo.filePath}
             alt={`Photo par ${photo.guest?.nickname || "Anonyme"}`}
             className="w-full h-full object-cover"
           />
