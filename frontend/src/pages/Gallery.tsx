@@ -13,8 +13,7 @@ type FilterType =
   | "spontaneous";
 
 export default function Gallery() {
-  const [photos, setPhotos] = useState<Photo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [photos] = useState<Photo[]>(mockPhotos);
   const [filter, setFilter] = useState<FilterType>("all");
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [displayCount, setDisplayCount] = useState(6);
@@ -23,14 +22,6 @@ export default function Gallery() {
 
   // Référence pour le détecteur de scroll infini
   const observerTarget = useRef<HTMLDivElement>(null);
-
-  // Charger les photos fictives au montage du composant
-  useEffect(() => {
-    setTimeout(() => {
-      setPhotos(mockPhotos);
-      setIsLoading(false);
-    }, 500);
-  }, []);
 
   // Détecter le scroll pour afficher/masquer le bouton "Remonter"
   useEffect(() => {
@@ -142,18 +133,6 @@ export default function Gallery() {
   const getFilterCount = (filterType: FilterType): number => {
     return filterCounts[filterType];
   };
-
-  // État de chargement
-  if (isLoading) {
-    return (
-      <div className="p-4 flex items-center justify-center min-h-[50vh]">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-momento border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-500">Chargement des photos...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="p-4 pb-20">

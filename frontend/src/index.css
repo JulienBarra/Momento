@@ -45,7 +45,7 @@
 }
 
 .animate-fade-in {
-  animation: fade-in 0.3s ease-out;
+  animation: fade-in 0.3s ease-out both;
 }
 
 /* Animation flash pour CameraPage */
