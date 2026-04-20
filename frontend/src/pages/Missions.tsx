@@ -5,12 +5,15 @@ import type { Mission } from "../services/api";
 import { missionService } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 
+type FilterType = "all" | "global" | "table";
+
 export default function Missions() {
   const navigate = useNavigate();
   const { guest } = useAuth();
   const [missions, setMissions] = useState<Mission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<FilterType>("all");
 
   useEffect(() => {
     let cancelled = false;
@@ -105,6 +108,15 @@ export default function Missions() {
     (m) => !m.isGlobal && m.tableId === guest?.tableId
   );
 
+  const filterCounts = {
+    all: globalMissions.length + tableMissions.length,
+    global: globalMissions.length,
+    table: tableMissions.length,
+  };
+
+  const showGlobal = filter === "all" || filter === "global";
+  const showTable = filter === "all" || filter === "table";
+
   return (
     <div className="p-4 pb-20 animate-fade-in">
       <div className="mb-6">
@@ -115,6 +127,40 @@ export default function Missions() {
           disponible
           {globalMissions.length + tableMissions.length > 1 ? "s" : ""}
         </p>
+      </div>
+
+      {/* Filtres */}
+      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+        <button
+          onClick={() => setFilter("all")}
+          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ${
+            filter === "all"
+              ? "bg-momento text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          }`}
+        >
+          Toutes ({filterCounts.all})
+        </button>
+        <button
+          onClick={() => setFilter("global")}
+          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ${
+            filter === "global"
+              ? "bg-momento text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          }`}
+        >
+          Missions globales ({filterCounts.global})
+        </button>
+        <button
+          onClick={() => setFilter("table")}
+          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ${
+            filter === "table"
+              ? "bg-purple-600 text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          }`}
+        >
+          Missions de table ({filterCounts.table})
+        </button>
       </div>
 
       {/* Photo spontanée */}
@@ -138,7 +184,7 @@ export default function Missions() {
       </button>
 
       {/* Missions globales */}
-      {globalMissions.length > 0 && (
+      {showGlobal && globalMissions.length > 0 && (
         <div className="mb-6">
           <div className="pb-2">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
@@ -176,7 +222,7 @@ export default function Missions() {
       )}
 
       {/* Missions de table */}
-      {tableMissions.length > 0 && (
+      {showTable && tableMissions.length > 0 && (
         <div>
           <div className="pb-2">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
