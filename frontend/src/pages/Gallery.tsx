@@ -217,16 +217,6 @@ export default function Gallery() {
       {/* Filtres */}
       <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
         <button
-          onClick={() => handleFilterChange("my-photos")}
-          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ${
-            filter === "my-photos"
-              ? "bg-momento text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-          }`}
-        >
-          Mes photos ({getFilterCount("my-photos")})
-        </button>
-        <button
           onClick={() => handleFilterChange("all")}
           className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ${
             filter === "all"
@@ -235,6 +225,16 @@ export default function Gallery() {
           }`}
         >
           Toutes ({getFilterCount("all")})
+        </button>
+        <button
+          onClick={() => handleFilterChange("my-photos")}
+          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ${
+            filter === "my-photos"
+              ? "bg-momento text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          }`}
+        >
+          Mes photos ({getFilterCount("my-photos")})
         </button>
         <button
           onClick={() => handleFilterChange("my-table")}
