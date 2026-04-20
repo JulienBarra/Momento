@@ -7,6 +7,7 @@ import PhotoModal from "../components/PhotoModal";
 
 type FilterType =
   | "all"
+  | "my-photos"
   | "my-table"
   | "global-missions"
   | "table-missions"
@@ -76,6 +77,7 @@ export default function Gallery() {
   // Fonction pour vérifier si une photo correspond au filtre
   const isPhotoMatchingFilter = (photo: Photo, currentFilter: FilterType) => {
     if (currentFilter === "all") return true;
+    if (currentFilter === "my-photos") return photo.guestId === guest?.id;
     if (currentFilter === "my-table") return photo.tableId === guest?.tableId;
     if (currentFilter === "global-missions") {
       if (!photo.missionId) return false;
@@ -95,6 +97,7 @@ export default function Gallery() {
   const filterCounts = useMemo(() => {
     return {
       all: photos.length,
+      "my-photos": photos.filter((p) => p.guestId === guest?.id).length,
       "my-table": photos.filter((p) => p.tableId === guest?.tableId).length,
       "global-missions": photos.filter((p) => {
         if (!p.missionId) return false;
@@ -108,7 +111,7 @@ export default function Gallery() {
       }).length,
       spontaneous: photos.filter((p) => p.missionId === null).length,
     };
-  }, [photos, missions, guest?.tableId]);
+  }, [photos, missions, guest?.tableId, guest?.id]);
 
   // Filtrer les photos selon le filtre actuel
   const filteredPhotos = photos.filter((photo) =>
@@ -213,6 +216,16 @@ export default function Gallery() {
 
       {/* Filtres */}
       <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+        <button
+          onClick={() => handleFilterChange("my-photos")}
+          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ${
+            filter === "my-photos"
+              ? "bg-momento text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          }`}
+        >
+          Mes photos ({getFilterCount("my-photos")})
+        </button>
         <button
           onClick={() => handleFilterChange("all")}
           className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ${
