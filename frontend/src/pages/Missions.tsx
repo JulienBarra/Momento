@@ -103,9 +103,10 @@ export default function Missions() {
     );
   }
 
+  const myTableId = guest?.tableId != null ? Number(guest.tableId) : null;
   const globalMissions = missions.filter((m) => m.isGlobal);
   const tableMissions = missions.filter(
-    (m) => !m.isGlobal && m.tableId === guest?.tableId
+    (m) => !m.isGlobal && Number(m.tableId) === myTableId
   );
 
   const filterCounts = {

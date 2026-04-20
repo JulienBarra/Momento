@@ -84,11 +84,14 @@ export default function Gallery() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const myTableId = guest?.tableId != null ? Number(guest.tableId) : null;
+  const myGuestId = guest?.id != null ? Number(guest.id) : null;
+
   // Fonction pour vérifier si une photo correspond au filtre
   const isPhotoMatchingFilter = (photo: Photo, currentFilter: FilterType) => {
     if (currentFilter === "all") return true;
-    if (currentFilter === "my-photos") return photo.guestId === guest?.id;
-    if (currentFilter === "my-table") return photo.tableId === guest?.tableId;
+    if (currentFilter === "my-photos") return Number(photo.guestId) === myGuestId;
+    if (currentFilter === "my-table") return Number(photo.tableId) === myTableId;
     if (currentFilter === "global-missions") {
       if (!photo.missionId) return false;
       const mission = missions.find((m) => m.id === photo.missionId);
@@ -107,8 +110,8 @@ export default function Gallery() {
   const filterCounts = useMemo(() => {
     return {
       all: photos.length,
-      "my-photos": photos.filter((p) => p.guestId === guest?.id).length,
-      "my-table": photos.filter((p) => p.tableId === guest?.tableId).length,
+      "my-photos": photos.filter((p) => Number(p.guestId) === myGuestId).length,
+      "my-table": photos.filter((p) => Number(p.tableId) === myTableId).length,
       "global-missions": photos.filter((p) => {
         if (!p.missionId) return false;
         const mission = missions.find((m) => m.id === p.missionId);
@@ -121,7 +124,7 @@ export default function Gallery() {
       }).length,
       spontaneous: photos.filter((p) => p.missionId === null).length,
     };
-  }, [photos, missions, guest?.tableId, guest?.id]);
+  }, [photos, missions, myTableId, myGuestId]);
 
   // Filtrer les photos selon le filtre actuel
   const filteredPhotos = photos.filter((photo) =>
