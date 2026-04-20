@@ -46,7 +46,17 @@ export default function Gallery() {
             filePath: getPhotoUrl(p.filePath),
           }));
           setPhotos(photosWithUrls);
-          setMissions(missionsData);
+
+          // Fusionner les missions "de la table courante" avec celles référencées
+          // par des photos d'autres tables (préloadées côté backend), dédupliquées.
+          const photoMissions = photosData
+            .map((p) => p.mission)
+            .filter((m): m is Mission => m != null);
+          const merged = [...missionsData, ...photoMissions];
+          const unique = Array.from(
+            new Map(merged.map((m) => [m.id, m])).values()
+          );
+          setMissions(unique);
         }
       } catch {
         if (!cancelled) {
@@ -161,9 +171,19 @@ export default function Gallery() {
     return missions.find((m) => m.id === missionId)?.isGlobal ?? null;
   };
 
+  const tablesById = useMemo(() => {
+    const map = new Map<number, string>();
+    photos.forEach((p) => {
+      if (p.table?.id && p.table?.name) {
+        map.set(p.table.id, p.table.name);
+      }
+    });
+    return map;
+  }, [photos]);
+
   const getTableName = (tableId: number | null) => {
     if (!tableId) return null;
-    return `Table ${tableId}`;
+    return tablesById.get(tableId) ?? `Table ${tableId}`;
   };
 
   const handleFilterChange = (newFilter: FilterType) => {

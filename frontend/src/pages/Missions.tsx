@@ -121,6 +121,12 @@ export default function Missions() {
     <div className="p-4 pb-20 animate-fade-in">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-black">Missions</h1>
+        {guest && (
+          <p className="inline-flex items-center gap-1.5 text-xs font-medium text-purple-600 bg-purple-50 rounded-full px-3 py-1 mt-2">
+            <Users size={12} />
+            {guest.table?.name ?? `Table ${guest.tableId}`}
+          </p>
+        )}
         <p className="text-gray-500 text-sm mt-1">
           {globalMissions.length + tableMissions.length} défi
           {globalMissions.length + tableMissions.length > 1 ? "s" : ""}{" "}
@@ -226,7 +232,7 @@ export default function Missions() {
         <div>
           <div className="pb-2">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Table {guest?.tableId ?? ""}
+              {guest?.table?.name ?? `Table ${guest?.tableId ?? ""}`}
             </p>
           </div>
           <div className="space-y-3">
@@ -247,7 +253,7 @@ export default function Missions() {
                     <p className="text-black font-semibold">{mission.title}</p>
                     <span className="inline-flex items-center gap-1 text-xs text-purple-600 mt-1">
                       <Users size={10} />
-                      Table {mission.tableId}
+                      {mission.table?.name ?? `Table ${mission.tableId}`}
                     </span>
                   </div>
                   <ChevronRight

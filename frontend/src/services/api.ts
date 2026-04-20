@@ -42,10 +42,18 @@ api.interceptors.response.use(
 );
 
 // Types pour l'API
+export interface Table {
+  id: number;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Guest {
   id: number;
   nickname: string;
   tableId: number;
+  table?: Table;
   createdAt: string;
   updatedAt: string;
 }
@@ -65,6 +73,8 @@ export interface Photo {
   createdAt: string;
   updatedAt: string;
   guest?: Guest;
+  mission?: Mission | null;
+  table?: Table | null;
 }
 
 export interface Mission {
@@ -72,6 +82,7 @@ export interface Mission {
   title: string;
   isGlobal: boolean;
   tableId: number | null;
+  table?: Table | null;
   createdAt: string;
   updatedAt: string;
 }
