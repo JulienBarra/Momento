@@ -30,8 +30,12 @@ export default class AuthController {
       return response.unauthorized({ error: 'Ce QR Code est invalide ou a été modifié.' })
     }
 
-    const tableId = params.id
+    const tableId = Number(params.id)
     const nickname = request.input('nickname')
+
+    if (!Number.isInteger(tableId)) {
+      return response.badRequest({ error: 'Identifiant de table invalide' })
+    }
 
     if (!nickname) {
       return response.badRequest({ error: 'Le pseudo est obligatoire' })
@@ -42,6 +46,8 @@ export default class AuthController {
       { nickname: nickname, tableId: tableId },
       { nickname: nickname, tableId: tableId }
     )
+
+    await guest.load('table')
 
     // C. Génère Access Token pour l'invité
     const token = await Guest.accessTokens.create(guest)

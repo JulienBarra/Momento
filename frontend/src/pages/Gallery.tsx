@@ -7,6 +7,7 @@ import PhotoModal from "../components/PhotoModal";
 
 type FilterType =
   | "all"
+  | "my-photos"
   | "my-table"
   | "global-missions"
   | "table-missions"
@@ -45,7 +46,17 @@ export default function Gallery() {
             filePath: getPhotoUrl(p.filePath),
           }));
           setPhotos(photosWithUrls);
-          setMissions(missionsData);
+
+          // Fusionner les missions "de la table courante" avec celles référencées
+          // par des photos d'autres tables (préloadées côté backend), dédupliquées.
+          const photoMissions = photosData
+            .map((p) => p.mission)
+            .filter((m): m is Mission => m != null);
+          const merged = [...missionsData, ...photoMissions];
+          const unique = Array.from(
+            new Map(merged.map((m) => [m.id, m])).values()
+          );
+          setMissions(unique);
         }
       } catch {
         if (!cancelled) {
@@ -73,10 +84,14 @@ export default function Gallery() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const myTableId = guest?.tableId != null ? Number(guest.tableId) : null;
+  const myGuestId = guest?.id != null ? Number(guest.id) : null;
+
   // Fonction pour vérifier si une photo correspond au filtre
   const isPhotoMatchingFilter = (photo: Photo, currentFilter: FilterType) => {
     if (currentFilter === "all") return true;
-    if (currentFilter === "my-table") return photo.tableId === guest?.tableId;
+    if (currentFilter === "my-photos") return Number(photo.guestId) === myGuestId;
+    if (currentFilter === "my-table") return Number(photo.tableId) === myTableId;
     if (currentFilter === "global-missions") {
       if (!photo.missionId) return false;
       const mission = missions.find((m) => m.id === photo.missionId);
@@ -95,7 +110,8 @@ export default function Gallery() {
   const filterCounts = useMemo(() => {
     return {
       all: photos.length,
-      "my-table": photos.filter((p) => p.tableId === guest?.tableId).length,
+      "my-photos": photos.filter((p) => Number(p.guestId) === myGuestId).length,
+      "my-table": photos.filter((p) => Number(p.tableId) === myTableId).length,
       "global-missions": photos.filter((p) => {
         if (!p.missionId) return false;
         const mission = missions.find((m) => m.id === p.missionId);
@@ -108,7 +124,7 @@ export default function Gallery() {
       }).length,
       spontaneous: photos.filter((p) => p.missionId === null).length,
     };
-  }, [photos, missions, guest?.tableId]);
+  }, [photos, missions, myTableId, myGuestId]);
 
   // Filtrer les photos selon le filtre actuel
   const filteredPhotos = photos.filter((photo) =>
@@ -158,9 +174,19 @@ export default function Gallery() {
     return missions.find((m) => m.id === missionId)?.isGlobal ?? null;
   };
 
+  const tablesById = useMemo(() => {
+    const map = new Map<number, string>();
+    photos.forEach((p) => {
+      if (p.table?.id && p.table?.name) {
+        map.set(p.table.id, p.table.name);
+      }
+    });
+    return map;
+  }, [photos]);
+
   const getTableName = (tableId: number | null) => {
     if (!tableId) return null;
-    return `Table ${tableId}`;
+    return tablesById.get(tableId) ?? `Table ${tableId}`;
   };
 
   const handleFilterChange = (newFilter: FilterType) => {
@@ -222,6 +248,16 @@ export default function Gallery() {
           }`}
         >
           Toutes ({getFilterCount("all")})
+        </button>
+        <button
+          onClick={() => handleFilterChange("my-photos")}
+          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ${
+            filter === "my-photos"
+              ? "bg-momento text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          }`}
+        >
+          Mes photos ({getFilterCount("my-photos")})
         </button>
         <button
           onClick={() => handleFilterChange("my-table")}

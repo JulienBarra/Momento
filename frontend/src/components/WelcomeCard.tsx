@@ -1,16 +1,21 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { Camera, Target, Images } from "lucide-react";
+import { Camera, Target, Images, Smartphone } from "lucide-react";
+import { useInstallPrompt } from "../hooks/useInstallPrompt";
+import InstallPromptSheet from "./InstallPromptSheet";
 
 export default function WelcomeCard() {
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [installSheetOpen, setInstallSheetOpen] = useState(false);
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { login, isAuthenticated } = useAuth();
+  const { platform, isStandalone } = useInstallPrompt();
+  const showInstallCta = !isStandalone && platform !== "desktop";
 
   // Si déjà authentifié, rediriger vers la galerie
   useEffect(() => {
@@ -18,6 +23,18 @@ export default function WelcomeCard() {
       navigate("/", { replace: true });
     }
   }, [isAuthenticated, navigate]);
+
+  // Auto-ouverture de la bottom-sheet d'install à la première visite (mobile uniquement)
+  useEffect(() => {
+    if (isAuthenticated) return;
+    if (isStandalone || platform === "desktop") return;
+    if (localStorage.getItem("install_sheet_seen")) return;
+    const timer = setTimeout(() => {
+      setInstallSheetOpen(true);
+      localStorage.setItem("install_sheet_seen", "1");
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, isStandalone, platform]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,6 +80,7 @@ export default function WelcomeCard() {
   ];
 
   return (
+    <>
     <form
       onSubmit={handleSubmit}
       className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 text-center animate-fade-in"
@@ -114,6 +132,22 @@ export default function WelcomeCard() {
       >
         {isLoading ? "Connexion..." : "Rejoindre la fête"}
       </button>
+
+      {showInstallCta && (
+        <button
+          type="button"
+          onClick={() => setInstallSheetOpen(true)}
+          className="mt-4 text-sm text-momento hover:underline underline-offset-2 flex items-center justify-center gap-2 mx-auto"
+        >
+          <Smartphone size={16} />
+          Installer l'app sur mon téléphone
+        </button>
+      )}
     </form>
+    <InstallPromptSheet
+      isOpen={installSheetOpen}
+      onClose={() => setInstallSheetOpen(false)}
+    />
+    </>
   );
 }

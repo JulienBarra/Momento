@@ -34,8 +34,11 @@ export default class PhotosController {
   }
 
   public async index({ response }: HttpContext) {
-    // On récupère les photos ET on charge les infos de l'invité associé (.preload)
-    const photos = await Photo.query().preload('guest').orderBy('createdAt', 'desc')
+    const photos = await Photo.query()
+      .preload('guest')
+      .preload('mission')
+      .preload('table')
+      .orderBy('createdAt', 'desc')
 
     return response.ok(photos)
   }

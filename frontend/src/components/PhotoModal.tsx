@@ -49,7 +49,7 @@ export default function PhotoModal({ photo, onClose, getMissionTitle, isMissionG
             </p>
             {tableName && (
               <p className="text-gray-500 text-sm italic mt-1">
-                de la table {tableName}
+                de la table <span className="font-bold text-black not-italic">{tableName}</span>
               </p>
             )}
           </div>
