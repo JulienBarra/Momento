@@ -1,0 +1,120 @@
+services:
+  # Reverse-proxy + HTTPS (Let's Encrypt auto)
+  caddy:
+    image: caddy:2-alpine
+    container_name: momento_caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      FRONTEND_DOMAIN: ${FRONTEND_DOMAIN}
+      API_DOMAIN: ${API_DOMAIN}
+      S3_DOMAIN: ${S3_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+      - frontend
+      - minio
+    restart: unless-stopped
+
+  # Base de données
+  postgres:
+    image: postgres:15-alpine
+    container_name: momento_pg
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # Stockage fichiers (MinIO)
+  minio:
+    image: minio/minio
+    container_name: momento_minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+    restart: unless-stopped
+
+  # One-shot : crée le bucket et le rend public en lecture
+  minio-init:
+    image: minio/mc
+    container_name: momento_minio_init
+    depends_on:
+      - minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      S3_BUCKET: ${S3_BUCKET}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        sleep 5
+        mc alias set local http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD
+        mc mb --ignore-existing local/$$S3_BUCKET
+        mc anonymous set download local/$$S3_BUCKET
+        exit 0
+    restart: "no"
+
+  # Backend AdonisJS
+  backend:
+    build:
+      context: ./backend
+    container_name: momento_backend
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3333
+      TZ: UTC
+      LOG_LEVEL: info
+      APP_KEY: ${APP_KEY}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_DATABASE: ${POSTGRES_DB}
+      DRIVE_DISK: s3
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      AWS_REGION: us-east-1
+      S3_BUCKET: ${S3_BUCKET}
+      S3_ENDPOINT: http://minio:9000
+      ADMIN_TOKEN: ${ADMIN_TOKEN}
+      FRONTEND_URL: https://${FRONTEND_DOMAIN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    restart: unless-stopped
+
+  # Frontend React (build statique servi par nginx)
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: https://${API_DOMAIN}
+        VITE_S3_ENDPOINT: https://${S3_DOMAIN}
+        VITE_S3_BUCKET: ${S3_BUCKET}
+    container_name: momento_frontend
+    restart: unless-stopped
+
+volumes:
+  pg_data:
+  minio_data:
+  caddy_data:
+  caddy_config:
