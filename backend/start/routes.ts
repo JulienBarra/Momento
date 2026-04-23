@@ -14,11 +14,18 @@ router.get('/', async () => {
 // =======================================================
 // 🟢 ROUTES PUBLIQUES (Pas besoin de badge pour y aller)
 // =======================================================
-// Route Admin pour générer le lien du QR Code (ex: GET /admin/tables/3/qr)
-router.get('/admin/tables/:id/qr', [AuthController, 'generateQrLink'])
-
 // Route Invité pour se connecter (avec la signature)
 router.post('/tables/:id/login', [AuthController, 'login']).as('guest.login')
+
+// =======================================================
+// 🛡️ ROUTES ADMIN (Bearer ADMIN_TOKEN)
+// =======================================================
+router
+  .group(() => {
+    router.get('/tables/:id/qr', [AuthController, 'generateQrLink'])
+  })
+  .prefix('/admin')
+  .use(middleware.admin())
 
 // =======================================================
 // 🔴 ROUTES PROTÉGÉES (Middleware auth)
