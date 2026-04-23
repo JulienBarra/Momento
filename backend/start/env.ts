@@ -39,5 +39,19 @@ export default await Env.create(new URL('../', import.meta.url), {
   AWS_SECRET_ACCESS_KEY: Env.schema.string(),
   AWS_REGION: Env.schema.string(),
   S3_BUCKET: Env.schema.string(),
-  S3_ENDPOINT: Env.schema.string.optional()
+  S3_ENDPOINT: Env.schema.string.optional(),
+
+  /*
+  |----------------------------------------------------------
+  | Token pour protéger les routes /admin/*
+  |----------------------------------------------------------
+  */
+  ADMIN_TOKEN: Env.schema.string(),
+
+  /*
+  |----------------------------------------------------------
+  | URL du frontend (utilisée pour restreindre CORS en prod)
+  |----------------------------------------------------------
+  */
+  FRONTEND_URL: Env.schema.string(),
 })
