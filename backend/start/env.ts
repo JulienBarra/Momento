@@ -47,4 +47,11 @@ export default await Env.create(new URL('../', import.meta.url), {
   |----------------------------------------------------------
   */
   ADMIN_TOKEN: Env.schema.string(),
+
+  /*
+  |----------------------------------------------------------
+  | URL du frontend (utilisée pour restreindre CORS en prod)
+  |----------------------------------------------------------
+  */
+  FRONTEND_URL: Env.schema.string(),
 })
