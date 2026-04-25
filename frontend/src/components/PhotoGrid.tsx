@@ -1,4 +1,4 @@
-import type { Photo, Mission } from "../services/api";
+import type { Photo } from "../services/api";
 import { CheckCircle2, Heart, Globe } from "lucide-react";
 
 interface PhotoGridProps {
