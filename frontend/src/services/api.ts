@@ -154,21 +154,11 @@ export const missionService = {
   },
 };
 
-// Helper pour construire l'URL complète d'une photo S3
 export const getPhotoUrl = (filePath: string): string => {
-  // Le backend stocke les photos sur S3
-  // L'URL doit être construite avec l'endpoint S3 + bucket + file_path
-  // Pour l'instant, on utilise une variable d'environnement
-  const s3Endpoint = import.meta.env.VITE_S3_ENDPOINT;
-  const s3Bucket = import.meta.env.VITE_S3_BUCKET;
-
-  if (s3Endpoint && s3Bucket) {
-    return `${s3Endpoint}/${s3Bucket}/${filePath}`;
-  }
-
-  // Fallback : si les variables ne sont pas définies, on retourne juste le file_path
-  // (le backend devra être modifié pour retourner les URLs complètes)
-  return filePath;
+  if (!filePath) return filePath;
+  if (/^https?:\/\//i.test(filePath)) return filePath;
+  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3333";
+  return `${apiUrl}/uploads/${filePath}`;
 };
 
 export default api;

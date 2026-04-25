@@ -14,20 +14,5 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
 
-  # Stockage de fichiers (MinIO)
-  minio:
-    image: minio/minio
-    container_name: momentApp_minio
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-    ports:
-      - "9000:9000" # API pour le code
-      - "9001:9001" # Console d'admin Web
-    volumes:
-      - minio_data:/data
-
 volumes:
   pg_data:
-  minio_data:

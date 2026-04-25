@@ -1,4 +1,4 @@
-# Remplace ces 3 domaines par les tiens avant de déployer.
+# Remplace ces 2 domaines par les tiens avant de déployer.
 # Caddy gère automatiquement le HTTPS (Let's Encrypt) — il te faut juste
 # que les DNS A/AAAA de ces domaines pointent déjà vers l'IP du VPS.
 
@@ -7,9 +7,7 @@
 }
 
 {$API_DOMAIN} {
+    @uploads path /uploads/*
+    header @uploads Cache-Control "public, max-age=31536000, immutable"
     reverse_proxy backend:3333
-}
-
-{$S3_DOMAIN} {
-    reverse_proxy minio:9000
 }
