@@ -1,3 +1,4 @@
+import app from '@adonisjs/core/services/app'
 import env from '#start/env'
 import { defineConfig, services } from '@adonisjs/drive'
 
@@ -9,16 +10,11 @@ const driveConfig = defineConfig({
    * services each using the same or a different driver.
    */
   services: {
-    s3: services.s3({
-      credentials: {
-        accessKeyId: env.get('AWS_ACCESS_KEY_ID'),
-        secretAccessKey: env.get('AWS_SECRET_ACCESS_KEY'),
-      },
-      region: env.get('AWS_REGION'),
-      bucket: env.get('S3_BUCKET'),
+    fs: services.fs({
+      location: app.makePath('storage/uploads'),
+      serveFiles: true,
+      routeBasePath: '/uploads',
       visibility: 'public',
-      endpoint: env.get('S3_ENDPOINT'),
-      forcePathStyle: true,
     }),
   },
 })

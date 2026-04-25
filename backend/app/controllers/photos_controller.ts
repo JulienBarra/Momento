@@ -17,7 +17,7 @@ export default class PhotosController {
     }
 
     // 2. Déplacement du fichier
-    const key = `uploads/${cuid()}.${image.extname}`
+    const key = `${cuid()}.${image.extname}`
     await image.moveToDisk(key)
 
     // 3. Enregistrement de la Photo liée à l'invité authentifié
