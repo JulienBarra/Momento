@@ -35,6 +35,7 @@ export default function PhotoPreview({
         missions={missions}
         onClick={onMissionClick}
         className="absolute top-6 left-6 right-6"
+        truncateTitle
       />
 
       {/* Indicateur de zoom */}
