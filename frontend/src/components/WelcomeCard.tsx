@@ -17,6 +17,19 @@ export default function WelcomeCard() {
   const { platform, isStandalone } = useInstallPrompt();
   const showInstallCta = !isStandalone && platform !== "desktop";
 
+  // Persister tableId/signature dès qu'ils arrivent dans l'URL,
+  // pour qu'ils survivent à un cold start PWA (start_url = "/")
+  useEffect(() => {
+    const tableIdParam = searchParams.get("tableId");
+    const signature = searchParams.get("signature");
+    if (tableIdParam && signature) {
+      localStorage.setItem(
+        "qr_invite",
+        JSON.stringify({ tableId: tableIdParam, signature }),
+      );
+    }
+  }, [searchParams]);
+
   // Si déjà authentifié, rediriger vers la galerie
   useEffect(() => {
     if (isAuthenticated) {
@@ -42,9 +55,23 @@ export default function WelcomeCard() {
 
     if (!name.trim()) return;
 
-    // Récupérer tableId et signature depuis l'URL
-    const tableIdParam = searchParams.get("tableId");
-    const signature = searchParams.get("signature");
+    // Récupérer tableId et signature depuis l'URL, avec fallback localStorage
+    // (cas PWA installée : start_url = "/" donc les params QR sont perdus au cold start)
+    let tableIdParam = searchParams.get("tableId");
+    let signature = searchParams.get("signature");
+
+    if (!tableIdParam || !signature) {
+      const stored = localStorage.getItem("qr_invite");
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          tableIdParam = tableIdParam ?? parsed.tableId;
+          signature = signature ?? parsed.signature;
+        } catch {
+          // ignore
+        }
+      }
+    }
 
     if (!tableIdParam || !signature) {
       setError(
