@@ -17,6 +17,9 @@ export default class Guest extends BaseModel {
   @column()
   declare tableId: number
 
+  @column({ serializeAs: null })
+  declare deviceSecret: string | null
+
   @belongsTo(() => Table)
   declare table: BelongsTo<typeof Table>
 

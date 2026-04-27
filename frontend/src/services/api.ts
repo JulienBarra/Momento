@@ -3,6 +3,17 @@ import axios from "axios";
 // URL de base de l'API backend
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3333";
 
+// Identifie ce device de manière stable pour empêcher l'usurpation de pseudo.
+// Persisté en localStorage à la première utilisation.
+export function getOrCreateDeviceSecret(): string {
+  let secret = localStorage.getItem("device_secret");
+  if (!secret) {
+    secret = crypto.randomUUID();
+    localStorage.setItem("device_secret", secret);
+  }
+  return secret;
+}
+
 // Instance Axios configurée
 export const api = axios.create({
   baseURL: API_URL,
@@ -91,8 +102,10 @@ export interface Mission {
 export const authService = {
   // Login d'un invité via QR code
   login: async (tableId: number, signature: string, nickname: string): Promise<LoginResponse> => {
+    const deviceSecret = getOrCreateDeviceSecret();
     const response = await api.post<LoginResponse>(`/tables/${tableId}/login?signature=${signature}`, {
       nickname,
+      deviceSecret,
     });
     return response.data;
   },

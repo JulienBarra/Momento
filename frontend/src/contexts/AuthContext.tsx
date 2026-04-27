@@ -39,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Stocker le token et les infos invité
       localStorage.setItem("auth_token", response.token);
       localStorage.setItem("guest", JSON.stringify(response.guest));
+      localStorage.setItem("last_nickname", response.guest.nickname);
 
       setToken(response.token);
       setGuest(response.guest);
