@@ -2,6 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import Table from '#models/table'
 import Guest from '#models/guest'
 import Photo from '#models/photo'
+import Mission from '#models/mission'
 
 export default class AdminTablesController {
   // GET /admin/tables — liste des tables avec le nombre d'invités et de photos
@@ -61,10 +62,15 @@ export default class AdminTablesController {
 
     const guestCount = await Guest.query().where('table_id', table.id).count('* as total')
     const photoCount = await Photo.query().where('table_id', table.id).count('* as total')
+    const missionCount = await Mission.query().where('table_id', table.id).count('* as total')
 
-    if (Number(guestCount[0].$extras.total) > 0 || Number(photoCount[0].$extras.total) > 0) {
+    if (
+      Number(guestCount[0].$extras.total) > 0 ||
+      Number(photoCount[0].$extras.total) > 0 ||
+      Number(missionCount[0].$extras.total) > 0
+    ) {
       return response.conflict({
-        error: 'Impossible de supprimer une table qui contient des invités ou des photos.',
+        error: 'Impossible de supprimer une table qui contient des invités, des photos ou des missions.',
       })
     }
 

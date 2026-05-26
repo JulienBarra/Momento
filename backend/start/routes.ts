@@ -5,6 +5,8 @@ const PhotosController = () => import('#controllers/photos_controller')
 const MissionsController = () => import('#controllers/missions_controller')
 const AuthController = () => import('#controllers/auth_controller')
 const AdminTablesController = () => import('#controllers/admin_tables_controller')
+const AdminMissionsController = () => import('#controllers/admin_missions_controller')
+const AdminDashboardController = () => import('#controllers/admin_dashboard_controller')
 
 router.get('/', async () => {
   return {
@@ -31,6 +33,15 @@ router
 
     // -- QR code signé d'une table --
     router.get('/tables/:id/qr', [AuthController, 'generateQrLink'])
+
+    // -- Missions (CRUD) --
+    router.get('/missions', [AdminMissionsController, 'index'])
+    router.post('/missions', [AdminMissionsController, 'store'])
+    router.patch('/missions/:id', [AdminMissionsController, 'update'])
+    router.delete('/missions/:id', [AdminMissionsController, 'destroy'])
+
+    // -- Tableau de bord --
+    router.get('/stats', [AdminDashboardController, 'stats'])
   })
   .prefix('/admin')
   .use(middleware.admin())

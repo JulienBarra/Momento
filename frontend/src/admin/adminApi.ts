@@ -71,6 +71,44 @@ export interface QrLinkResponse {
   signature: string;
 }
 
+export interface AdminMission {
+  id: number;
+  title: string;
+  isGlobal: boolean;
+  tableId: number | null;
+  table: { id: number; name: string } | null;
+  completedCount: number;
+  target: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MissionPayload {
+  title: string;
+  isGlobal: boolean;
+  tableId?: number | null;
+  applyToAllTables?: boolean;
+}
+
+export interface DashboardStats {
+  photos: { total: number; lastHour: number };
+  guests: { connected: number };
+  missions: { accomplishedPhotos: number; globalCount: number };
+  tables: { total: number; active: number };
+  leaderboard: { id: number; name: string; count: number }[];
+  recent: {
+    id: number;
+    filePath: string;
+    guestNickname: string;
+    tableId: number | null;
+    tableName: string | null;
+    mission: { title: string; isGlobal: boolean } | null;
+    createdAt: string;
+  }[];
+  globalMissions: { id: number; title: string; completedCount: number; target: number }[];
+  buckets: { key: string; count: number }[];
+}
+
 // ---- Services ----
 export const adminTableService = {
   getAll: async (): Promise<AdminTable[]> => {
@@ -90,6 +128,31 @@ export const adminTableService = {
   },
   qrLink: async (id: number): Promise<QrLinkResponse> => {
     const { data } = await adminApi.get<QrLinkResponse>(`/admin/tables/${id}/qr`);
+    return data;
+  },
+};
+
+export const adminMissionService = {
+  getAll: async (): Promise<AdminMission[]> => {
+    const { data } = await adminApi.get<AdminMission[]>("/admin/missions");
+    return data;
+  },
+  create: async (payload: MissionPayload): Promise<AdminMission | AdminMission[]> => {
+    const { data } = await adminApi.post("/admin/missions", payload);
+    return data;
+  },
+  update: async (id: number, payload: Partial<MissionPayload>): Promise<AdminMission> => {
+    const { data } = await adminApi.patch<AdminMission>(`/admin/missions/${id}`, payload);
+    return data;
+  },
+  remove: async (id: number): Promise<void> => {
+    await adminApi.delete(`/admin/missions/${id}`);
+  },
+};
+
+export const adminStatsService = {
+  get: async (): Promise<DashboardStats> => {
+    const { data } = await adminApi.get<DashboardStats>("/admin/stats");
     return data;
   },
 };
