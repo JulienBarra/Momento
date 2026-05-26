@@ -10,6 +10,130 @@
   font-family: var(--font-family-title);
 }
 
+/* =========================================================
+   Backoffice admin — design system (scopé sous .admin-root
+   pour ne pas affecter l'app invités mobile)
+   ========================================================= */
+.admin-root {
+  --momento: #71a36d;
+  --momento-600: #5f8f5c;
+  --momento-50: #eef5ec;
+  --ink: #0b0e0b;
+  --ink-2: #1a1f1a;
+  --muted: #6b7280;
+  --line: #e8ebe6;
+  --bg: #fafaf7;
+  --card: #ffffff;
+  --purple: #7c3aed;
+  --red: #ef4444;
+  --amber: #d97706;
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.admin-root .font-mono {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+.admin-root .bg-momento {
+  background: var(--momento);
+}
+.admin-root .bg-momento-50 {
+  background: var(--momento-50);
+}
+.admin-root .text-momento {
+  color: var(--momento);
+}
+.admin-root .border-momento {
+  border-color: var(--momento);
+}
+.admin-root .ring-momento {
+  --tw-ring-color: var(--momento);
+}
+.admin-root .hover\:bg-momento:hover {
+  background: var(--momento);
+}
+.admin-root .hover\:bg-momento-600:hover {
+  background: var(--momento-600);
+}
+.admin-root .border-line {
+  border-color: var(--line);
+}
+.admin-root .bg-ink {
+  background: var(--ink);
+}
+.admin-root .text-ink {
+  color: var(--ink);
+}
+.admin-root .text-muted {
+  color: var(--muted);
+}
+.admin-root .divide-line > * + * {
+  border-top: 1px solid var(--line);
+}
+.admin-root .pad-card {
+  padding: 24px;
+}
+.admin-root .pad-block {
+  padding: 20px 24px;
+}
+
+/* Placeholder image pattern */
+.admin-root .img-ph {
+  background-image: repeating-linear-gradient(
+    135deg,
+    #e9ece6,
+    #e9ece6 6px,
+    #dde1d9 6px,
+    #dde1d9 12px
+  );
+}
+
+/* Checkbox accent */
+.admin-root input[type="checkbox"].mm {
+  accent-color: var(--momento);
+}
+
+/* Hover zoom for gallery thumbnails */
+.admin-root .gallery-item img {
+  transition: transform 600ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.admin-root .gallery-item:hover img {
+  transform: scale(1.04);
+}
+
+/* Pulse dot (live indicator) */
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(113, 163, 109, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(113, 163, 109, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(113, 163, 109, 0);
+  }
+}
+.admin-root .pulse-dot {
+  animation: pulse-ring 2s infinite;
+}
+
+/* Impression — planche A6 de cartes QR */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body,
+  html {
+    background: white !important;
+  }
+  .print-area {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+}
+
 /* Animation flash pour la prise de photo */
 @keyframes flash {
   0% {

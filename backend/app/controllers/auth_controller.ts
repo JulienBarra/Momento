@@ -1,24 +1,32 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import router from '@adonisjs/core/services/router'
+import env from '#start/env'
 import Guest from '#models/guest'
 
 export default class AuthController {
-  // Lorsque le frontend sera créer et hébergera le QR Code
-  // il faudra remplacer l'URL de base par celle du frontend
-  // (ex: https://app.momento.com/tables/3/login?signature=...)
-
-  //  1.(ADMIN) : Générer le lien à mettre dans le QR Code
-  //  Fabrique le ticket d'entrée crypté
+  //  1.(ADMIN) : Générer le lien à encoder dans le QR Code d'une table
+  //  Renvoie l'URL frontend réellement scannée par l'invité :
+  //  {FRONTEND_URL}/join?tableId=X&signature=...
+  //  La signature est calculée pour la route 'guest.login' avec l'APP_KEY de
+  //  ce serveur ; c'est donc bien ce serveur (= la prod) qui doit la générer.
   async generateQrLink({ params, response }: HttpContext) {
-    const tableId = params.id
+    const tableId = Number(params.id)
+    if (!Number.isInteger(tableId)) {
+      return response.badRequest({ error: 'Identifiant de table invalide' })
+    }
 
-    // Génère une URL signée valide pour la route 'guest.login'
-    const signedUrl = router.makeSignedUrl('guest.login', { id: tableId })
+    const frontendUrl = env.get('FRONTEND_URL').replace(/\/+$/, '')
 
-    // En local, ça va donner un truc genre : /tables/3/login?signature=...
+    // URL signée AdonisJS pour la route 'guest.login' (= /tables/:id/login?signature=...)
+    const signedPath = router.makeSignedUrl('guest.login', { id: tableId })
+    const signature = new URL(signedPath, frontendUrl).searchParams.get('signature')
+
+    const joinUrl = `${frontendUrl}/join?tableId=${tableId}&signature=${signature}`
+
     return response.ok({
-      message: 'Voici le lien sécurisé à encoder dans le QR Code de cette table',
-      url: signedUrl,
+      message: 'Lien sécurisé à encoder dans le QR Code de cette table',
+      url: joinUrl,
+      signature,
     })
   }
 

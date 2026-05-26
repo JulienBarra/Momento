@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CameraProvider } from "./contexts/CameraContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -7,6 +7,15 @@ import MobileLayout from "./components/MobileLayout";
 import Gallery from "./pages/Gallery";
 import CameraPage from "./pages/CameraPage";
 import Missions from "./pages/Missions";
+import AdminProtectedRoute from "./admin/AdminProtectedRoute";
+import AdminLayout from "./admin/AdminLayout";
+import AdminLogin from "./admin/pages/AdminLogin";
+import DashboardView from "./admin/pages/DashboardView";
+import TablesView from "./admin/pages/TablesView";
+import PhotosAdminView from "./admin/pages/PhotosView";
+import MissionsAdminView from "./admin/pages/MissionsView";
+import QRCodesView from "./admin/pages/QRCodesView";
+import CoupleView from "./admin/pages/CoupleView";
 
 function App() {
   return (
@@ -35,6 +44,20 @@ function App() {
               <Route path="/" element={<Gallery />} />
               <Route path="/camera" element={<CameraPage />} />
               <Route path="/missions" element={<Missions />} />
+            </Route>
+          </Route>
+
+          {/* Backoffice admin (desktop) */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route element={<AdminProtectedRoute />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="dashboard" element={<DashboardView />} />
+              <Route path="tables" element={<TablesView />} />
+              <Route path="photos" element={<PhotosAdminView />} />
+              <Route path="missions" element={<MissionsAdminView />} />
+              <Route path="qr" element={<QRCodesView />} />
+              <Route path="couple" element={<CoupleView />} />
             </Route>
           </Route>
         </Routes>

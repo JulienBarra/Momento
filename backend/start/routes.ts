@@ -4,6 +4,7 @@ import { middleware } from '#start/kernel'
 const PhotosController = () => import('#controllers/photos_controller')
 const MissionsController = () => import('#controllers/missions_controller')
 const AuthController = () => import('#controllers/auth_controller')
+const AdminTablesController = () => import('#controllers/admin_tables_controller')
 
 router.get('/', async () => {
   return {
@@ -22,6 +23,13 @@ router.post('/tables/:id/login', [AuthController, 'login']).as('guest.login')
 // =======================================================
 router
   .group(() => {
+    // -- Tables (CRUD) --
+    router.get('/tables', [AdminTablesController, 'index'])
+    router.post('/tables', [AdminTablesController, 'store'])
+    router.patch('/tables/:id', [AdminTablesController, 'update'])
+    router.delete('/tables/:id', [AdminTablesController, 'destroy'])
+
+    // -- QR code signé d'une table --
     router.get('/tables/:id/qr', [AuthController, 'generateQrLink'])
   })
   .prefix('/admin')
