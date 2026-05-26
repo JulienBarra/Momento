@@ -7,6 +7,7 @@ const AuthController = () => import('#controllers/auth_controller')
 const AdminTablesController = () => import('#controllers/admin_tables_controller')
 const AdminMissionsController = () => import('#controllers/admin_missions_controller')
 const AdminDashboardController = () => import('#controllers/admin_dashboard_controller')
+const AdminPhotosController = () => import('#controllers/admin_photos_controller')
 
 router.get('/', async () => {
   return {
@@ -39,6 +40,11 @@ router
     router.post('/missions', [AdminMissionsController, 'store'])
     router.patch('/missions/:id', [AdminMissionsController, 'update'])
     router.delete('/missions/:id', [AdminMissionsController, 'destroy'])
+
+    // -- Photos (admin : favori + suppression) --
+    router.get('/photos', [AdminPhotosController, 'index'])
+    router.patch('/photos/:id', [AdminPhotosController, 'update'])
+    router.delete('/photos/:id', [AdminPhotosController, 'destroy'])
 
     // -- Tableau de bord --
     router.get('/stats', [AdminDashboardController, 'stats'])

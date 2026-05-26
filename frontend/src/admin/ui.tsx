@@ -117,6 +117,12 @@ export function formatTime(iso: string): string {
   return `${String(d.getHours()).padStart(2, "0")}h${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
+// Ouvre l'original dans un nouvel onglet (téléchargement fiable cross-origin
+// non garanti en dev ; l'utilisateur enregistre depuis l'onglet).
+export function openPhoto(url: string) {
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
 export function Placeholder({
   title,
   phase,

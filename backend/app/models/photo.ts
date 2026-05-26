@@ -21,6 +21,9 @@ export default class Photo extends BaseModel {
   @column()
   declare guestId: number
 
+  @column()
+  declare starred: boolean
+
   @belongsTo(() => Guest)
   declare guest: BelongsTo<typeof Guest>
 

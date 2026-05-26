@@ -90,6 +90,19 @@ export interface MissionPayload {
   applyToAllTables?: boolean;
 }
 
+export interface AdminPhoto {
+  id: number;
+  filePath: string;
+  tableId: number | null;
+  missionId: number | null;
+  guestId: number;
+  starred: boolean;
+  createdAt: string;
+  guest: { id: number; nickname: string } | null;
+  table: { id: number; name: string } | null;
+  mission: { id: number; title: string; isGlobal: boolean } | null;
+}
+
 export interface DashboardStats {
   photos: { total: number; lastHour: number };
   guests: { connected: number };
@@ -154,5 +167,19 @@ export const adminStatsService = {
   get: async (): Promise<DashboardStats> => {
     const { data } = await adminApi.get<DashboardStats>("/admin/stats");
     return data;
+  },
+};
+
+export const adminPhotoService = {
+  getAll: async (): Promise<AdminPhoto[]> => {
+    const { data } = await adminApi.get<AdminPhoto[]>("/admin/photos");
+    return data;
+  },
+  setStarred: async (id: number, starred: boolean): Promise<AdminPhoto> => {
+    const { data } = await adminApi.patch<AdminPhoto>(`/admin/photos/${id}`, { starred });
+    return data;
+  },
+  remove: async (id: number): Promise<void> => {
+    await adminApi.delete(`/admin/photos/${id}`);
   },
 };
