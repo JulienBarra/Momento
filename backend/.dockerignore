@@ -8,4 +8,5 @@ npm-debug.log
 .gitignore
 .DS_Store
 tests
+bin/test.ts
 *.log
