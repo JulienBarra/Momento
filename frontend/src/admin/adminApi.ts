@@ -65,6 +65,21 @@ export interface AdminTable {
   updatedAt: string;
 }
 
+export interface AdminGuest {
+  id: number;
+  nickname: string;
+  tableId: number;
+  table: { id: number; name: string } | null;
+  photoCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GuestPayload {
+  nickname?: string;
+  tableId?: number;
+}
+
 export interface QrLinkResponse {
   message: string;
   url: string;
@@ -142,6 +157,24 @@ export const adminTableService = {
   qrLink: async (id: number): Promise<QrLinkResponse> => {
     const { data } = await adminApi.get<QrLinkResponse>(`/admin/tables/${id}/qr`);
     return data;
+  },
+};
+
+export const adminGuestService = {
+  getAll: async (): Promise<AdminGuest[]> => {
+    const { data } = await adminApi.get<AdminGuest[]>("/admin/guests");
+    return data;
+  },
+  create: async (payload: { nickname: string; tableId: number }): Promise<AdminGuest> => {
+    const { data } = await adminApi.post<AdminGuest>("/admin/guests", payload);
+    return data;
+  },
+  update: async (id: number, payload: GuestPayload): Promise<AdminGuest> => {
+    const { data } = await adminApi.patch<AdminGuest>(`/admin/guests/${id}`, payload);
+    return data;
+  },
+  remove: async (id: number): Promise<void> => {
+    await adminApi.delete(`/admin/guests/${id}`);
   },
 };
 

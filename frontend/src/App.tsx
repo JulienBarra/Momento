@@ -12,6 +12,7 @@ import AdminLayout from "./admin/AdminLayout";
 import AdminLogin from "./admin/pages/AdminLogin";
 import DashboardView from "./admin/pages/DashboardView";
 import TablesView from "./admin/pages/TablesView";
+import GuestsView from "./admin/pages/GuestsView";
 import PhotosAdminView from "./admin/pages/PhotosView";
 import MissionsAdminView from "./admin/pages/MissionsView";
 import QRCodesView from "./admin/pages/QRCodesView";
@@ -54,6 +55,7 @@ function App() {
               <Route index element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="dashboard" element={<DashboardView />} />
               <Route path="tables" element={<TablesView />} />
+              <Route path="guests" element={<GuestsView />} />
               <Route path="photos" element={<PhotosAdminView />} />
               <Route path="missions" element={<MissionsAdminView />} />
               <Route path="qr" element={<QRCodesView />} />

@@ -8,6 +8,7 @@ const AdminTablesController = () => import('#controllers/admin_tables_controller
 const AdminMissionsController = () => import('#controllers/admin_missions_controller')
 const AdminDashboardController = () => import('#controllers/admin_dashboard_controller')
 const AdminPhotosController = () => import('#controllers/admin_photos_controller')
+const AdminGuestsController = () => import('#controllers/admin_guests_controller')
 
 router.get('/', async () => {
   return {
@@ -34,6 +35,12 @@ router
 
     // -- QR code signé d'une table --
     router.get('/tables/:id/qr', [AuthController, 'generateQrLink'])
+
+    // -- Invités (CRUD) --
+    router.get('/guests', [AdminGuestsController, 'index'])
+    router.post('/guests', [AdminGuestsController, 'store'])
+    router.patch('/guests/:id', [AdminGuestsController, 'update'])
+    router.delete('/guests/:id', [AdminGuestsController, 'destroy'])
 
     // -- Missions (CRUD) --
     router.get('/missions', [AdminMissionsController, 'index'])

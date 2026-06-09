@@ -3,6 +3,7 @@ import {
   Camera,
   LayoutDashboard,
   LayoutGrid,
+  Users,
   Image as ImageIcon,
   Target,
   QrCode,
@@ -21,6 +22,7 @@ interface Section {
 const SECTIONS_ADMIN: Section[] = [
   { id: "dashboard", label: "Tableau de bord", to: "/admin/dashboard", icon: LayoutDashboard },
   { id: "tables", label: "Tables", to: "/admin/tables", icon: LayoutGrid },
+  { id: "guests", label: "Invités", to: "/admin/guests", icon: Users },
   { id: "photos", label: "Photos", to: "/admin/photos", icon: ImageIcon },
   { id: "missions", label: "Missions", to: "/admin/missions", icon: Target },
   { id: "qr", label: "QR codes", to: "/admin/qr", icon: QrCode },
