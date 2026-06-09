@@ -41,7 +41,7 @@ export default function DashboardView() {
     <div>
       <Topbar
         title="Tableau de bord"
-        subtitle={`${EVENT.couple} · ${EVENT.dateLong} · ${EVENT.venue}`}
+        subtitle={`${EVENT.couple} · ${EVENT.dateLong}`}
       />
 
       <div className="p-10 space-y-6">
@@ -121,6 +121,9 @@ function Stat({
 
 function ActivityChart({ buckets }: { buckets: DashboardStats["buckets"] }) {
   const max = Math.max(...buckets.map((b) => b.count), 1);
+  // On espace l'affichage des horaires pour qu'ils restent lisibles quel que
+  // soit le nombre de tranches (≈ 7 libellés maximum).
+  const labelStep = Math.max(1, Math.ceil(buckets.length / 7));
   return (
     <Card>
       <div className="flex items-center justify-between mb-5">
@@ -137,23 +140,36 @@ function ActivityChart({ buckets }: { buckets: DashboardStats["buckets"] }) {
           Aucune activité pour l'instant
         </div>
       ) : (
-        <div className="flex items-end gap-1.5 h-44">
-          {buckets.map((b, i) => {
-            const h = b.count ? Math.max(4, (b.count / max) * 100) : 2;
-            return (
-              <div key={`${b.key}-${i}`} className="flex-1 flex flex-col items-center gap-2 group">
-                <div
-                  className="relative w-full rounded-sm transition-all bg-momento"
-                  style={{ height: `${h}%` }}
-                >
-                  <div className="opacity-0 group-hover:opacity-100 absolute -top-7 left-1/2 -translate-x-1/2 bg-ink text-white text-[10px] px-1.5 py-0.5 rounded font-mono">
-                    {b.count}
+        <div>
+          <div className="flex items-end gap-1.5 h-44">
+            {buckets.map((b, i) => {
+              const h = b.count ? Math.max(4, (b.count / max) * 100) : 2;
+              return (
+                <div key={`${b.key}-${i}`} className="flex-1 h-full flex items-end group">
+                  <div
+                    className="relative w-full rounded-sm transition-all bg-momento"
+                    style={{ height: `${h}%` }}
+                  >
+                    <div className="opacity-0 group-hover:opacity-100 absolute -top-7 left-1/2 -translate-x-1/2 bg-ink text-white text-[10px] px-1.5 py-0.5 rounded font-mono whitespace-nowrap z-10">
+                      {b.count}
+                    </div>
                   </div>
                 </div>
-                <div className="text-[10px] text-muted font-mono">{i % 2 === 0 ? b.key : " "}</div>
+              );
+            })}
+          </div>
+          {/* Libellés d'horaires sur leur propre rangée, clippée pour qu'aucun
+              libellé ne déborde de la card (et ne passe sous la card voisine). */}
+          <div className="flex gap-1.5 mt-2 overflow-hidden">
+            {buckets.map((b, i) => (
+              <div
+                key={`${b.key}-${i}-label`}
+                className="flex-1 min-w-0 text-center text-[10px] text-muted font-mono whitespace-nowrap"
+              >
+                {i % labelStep === 0 ? b.key : ""}
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
       )}
     </Card>

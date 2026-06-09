@@ -5,5 +5,4 @@ export const EVENT = {
   couple: "Fleur & Anthony",
   dateShort: "Sam. 13 juin 2026",
   dateLong: "Samedi 13 juin 2026",
-  venue: "Domaine des Oliviers · Saint-Rémy-de-Provence",
 };

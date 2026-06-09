@@ -1,14 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
-import { Star, Globe, Users, Heart, Download, Check, Share2 } from "lucide-react";
+import {
+  Star,
+  Globe,
+  Users,
+  Heart,
+  Download,
+  Check,
+  Share2,
+  Images,
+  Plus,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   adminPhotoService,
   adminMissionService,
   adminTableService,
+  adminAlbumService,
   tableColor,
   type AdminPhoto,
   type AdminMission,
   type AdminTable,
+  type AdminAlbum,
 } from "../adminApi";
 import { Btn, formatTime, openPhoto } from "../ui";
 import { getPhotoUrl } from "../../services/api";
@@ -30,22 +43,56 @@ export default function CoupleView() {
   const [layout, setLayout] = useState<"mosaic" | "grid">("mosaic");
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [detail, setDetail] = useState<AdminPhoto | null>(null);
+  const [albums, setAlbums] = useState<AdminAlbum[]>([]);
+  const [albumPickerOpen, setAlbumPickerOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
     try {
-      const [ps, ts, ms] = await Promise.all([
+      const [ps, ts, ms, als] = await Promise.all([
         adminPhotoService.getAll(),
         adminTableService.getAll(),
         adminMissionService.getAll(),
+        adminAlbumService.getAll(),
       ]);
       setPhotos(ps);
       setTables(ts);
       setMissions(ms);
+      setAlbums(als);
     } catch {
       toast.error("Impossible de charger la galerie");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Ajoute la sélection courante à un album existant (fusion sans doublon).
+  const addSelectionToAlbum = async (album: AdminAlbum) => {
+    const merged = [...new Set([...album.photoIds, ...selected])];
+    const added = merged.length - album.photoIds.length;
+    try {
+      const updated = await adminAlbumService.setPhotos(album.id, merged);
+      setAlbums((list) => list.map((a) => (a.id === album.id ? updated : a)));
+      setAlbumPickerOpen(false);
+      setSelected(new Set());
+      toast.success(
+        added > 0
+          ? `${added} photo${added > 1 ? "s" : ""} ajoutée${added > 1 ? "s" : ""} à « ${album.title} »`
+          : "Ces photos sont déjà dans l'album"
+      );
+    } catch {
+      toast.error("Ajout impossible");
+    }
+  };
+
+  // Crée un album puis y verse directement la sélection.
+  const createAlbumWithSelection = async (title: string) => {
+    try {
+      const album = await adminAlbumService.create({ title });
+      await addSelectionToAlbum(album);
+      setAlbums((list) => [album, ...list.filter((a) => a.id !== album.id)]);
+    } catch {
+      toast.error("Création impossible");
     }
   };
 
@@ -123,9 +170,7 @@ export default function CoupleView() {
               Votre mariage · Album
             </p>
             <h1 className="font-title text-7xl text-ink leading-none">{EVENT.couple}</h1>
-            <p className="text-sm text-muted mt-3">
-              {EVENT.dateLong} · {EVENT.venue}
-            </p>
+            <p className="text-sm text-muted mt-3">{EVENT.dateLong}</p>
           </div>
           <div className="flex items-center gap-2">
             <Btn variant="outline" onClick={() => setOnlyFavs(true)}>
@@ -243,6 +288,12 @@ export default function CoupleView() {
               <Star size={14} fill="currentColor" /> Favoris
             </button>
             <button
+              className="text-xs px-2.5 py-1.5 rounded-md hover:bg-white/10 flex items-center gap-1.5"
+              onClick={() => setAlbumPickerOpen(true)}
+            >
+              <Images size={14} /> Ajouter à un album
+            </button>
+            <button
               className="text-xs px-2.5 py-1.5 rounded-md hover:bg-white/10"
               onClick={() => setSelected(new Set())}
             >
@@ -299,6 +350,111 @@ export default function CoupleView() {
           onToggleStar={() => toggleStar(detail)}
         />
       )}
+
+      {albumPickerOpen && (
+        <AlbumPicker
+          albums={albums}
+          count={selected.size}
+          onClose={() => setAlbumPickerOpen(false)}
+          onPick={addSelectionToAlbum}
+          onCreate={createAlbumWithSelection}
+        />
+      )}
+    </div>
+  );
+}
+
+// Petit sélecteur : choisir un album existant ou en créer un, pour y verser
+// les photos actuellement sélectionnées dans la galerie.
+function AlbumPicker({
+  albums,
+  count,
+  onClose,
+  onPick,
+  onCreate,
+}: {
+  albums: AdminAlbum[];
+  count: number;
+  onClose: () => void;
+  onPick: (album: AdminAlbum) => void;
+  onCreate: (title: string) => void;
+}) {
+  const [newTitle, setNewTitle] = useState("");
+  return (
+    <div
+      className="fixed inset-0 bg-ink/60 backdrop-blur-sm z-50 flex items-center justify-center p-6"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-5 border-b border-line flex items-start justify-between">
+          <div>
+            <p className="font-semibold text-ink">Ajouter à un album</p>
+            <p className="text-xs text-muted mt-0.5">
+              {count} photo{count > 1 ? "s" : ""} sélectionnée{count > 1 ? "s" : ""}
+            </p>
+          </div>
+          <button onClick={onClose} className="p-1.5 hover:bg-[color:var(--bg)] rounded-md">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="p-4 flex-1 overflow-y-auto">
+          {albums.length === 0 ? (
+            <p className="text-sm text-muted px-1 py-2">Aucun album pour l'instant.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {albums.map((a) => (
+                <button
+                  key={a.id}
+                  onClick={() => onPick(a)}
+                  className="w-full flex items-center gap-3 p-2 rounded-lg border border-line hover:bg-[color:var(--bg)] transition text-left"
+                >
+                  <div className="w-10 h-10 rounded-md bg-[color:var(--bg)] overflow-hidden shrink-0 flex items-center justify-center">
+                    {a.coverPath ? (
+                      <img
+                        src={getPhotoUrl(a.coverPath)}
+                        className="w-full h-full object-cover"
+                        alt=""
+                      />
+                    ) : (
+                      <Images size={16} className="text-muted" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-ink truncate">{a.title}</p>
+                    <p className="text-xs text-muted">
+                      {a.photoCount} photo{a.photoCount > 1 ? "s" : ""}
+                    </p>
+                  </div>
+                  <Plus size={16} className="ml-auto text-muted shrink-0" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 border-t border-line flex items-center gap-2">
+          <input
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && newTitle.trim()) onCreate(newTitle.trim());
+            }}
+            placeholder="Nouvel album…"
+            className="flex-1 text-sm border border-line rounded-lg px-3 py-2"
+          />
+          <Btn
+            variant="primary"
+            onClick={() => newTitle.trim() && onCreate(newTitle.trim())}
+            disabled={!newTitle.trim()}
+          >
+            <Plus size={14} /> Créer
+          </Btn>
+        </div>
+      </div>
     </div>
   );
 }
