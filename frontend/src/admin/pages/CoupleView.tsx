@@ -44,7 +44,6 @@ export default function CoupleView() {
   const [detail, setDetail] = useState<AdminPhoto | null>(null);
   const [albums, setAlbums] = useState<AdminAlbum[]>([]);
   const [albumPickerOpen, setAlbumPickerOpen] = useState(false);
-  const [downloading, setDownloading] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -135,18 +134,13 @@ export default function CoupleView() {
     }
   };
 
-  // Télécharge un lot sur l'appareil : 1 photo = fichier direct, sinon un .zip.
-  const downloadMany = async (list: AdminPhoto[], zipName: string) => {
-    if (list.length === 0 || downloading) return;
-    setDownloading(true);
-    try {
-      if (list.length === 1) await downloadPhoto(list[0].filePath);
-      else await downloadPhotosZip(list.map((p) => p.filePath), zipName);
-    } catch {
-      toast.error("Téléchargement impossible");
-    } finally {
-      setDownloading(false);
-    }
+  // Télécharge un lot sur l'appareil : 1 photo = fichier direct, sinon un .zip
+  // (généré par le backend). Le navigateur affiche sa propre progression.
+  const downloadMany = (list: AdminPhoto[], zipName: string) => {
+    if (list.length === 0) return;
+    if (list.length === 1) downloadPhoto(list[0].filePath);
+    else downloadPhotosZip(list.map((p) => p.filePath), zipName);
+    toast.success("Téléchargement lancé");
   };
   const downloadAll = () => downloadMany(filtered, "momento-galerie.zip");
   const downloadSelection = () =>
@@ -189,13 +183,8 @@ export default function CoupleView() {
             <p className="text-sm text-muted mt-3">{EVENT.dateLong}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Btn
-              variant="dark"
-              onClick={downloadAll}
-              disabled={filtered.length === 0 || downloading}
-            >
-              <Download size={16} />{" "}
-              {downloading ? "Préparation…" : `Tout télécharger (${filtered.length})`}
+            <Btn variant="dark" onClick={downloadAll} disabled={filtered.length === 0}>
+              <Download size={16} /> Tout télécharger ({filtered.length})
             </Btn>
           </div>
         </div>
@@ -285,11 +274,10 @@ export default function CoupleView() {
           </span>
           <div className="ml-auto flex items-center gap-1.5">
             <button
-              className="text-xs px-2.5 py-1.5 rounded-md hover:bg-white/10 flex items-center gap-1.5 disabled:opacity-50"
+              className="text-xs px-2.5 py-1.5 rounded-md hover:bg-white/10 flex items-center gap-1.5"
               onClick={downloadSelection}
-              disabled={downloading}
             >
-              <Download size={14} /> {downloading ? "Préparation…" : "Télécharger"}
+              <Download size={14} /> Télécharger
             </button>
             <button
               className="text-xs px-2.5 py-1.5 rounded-md hover:bg-white/10 flex items-center gap-1.5"

@@ -200,56 +200,61 @@ export const getPhotoUrl = (filePath: string): string => {
   return `${apiUrl}/uploads/${filePath}`;
 };
 
-// Déclenche un téléchargement « Enregistrer sous » du fichier sur l'appareil.
-// Repli sur l'ouverture dans un onglet si le fetch cross-origin échoue.
-export async function downloadPhoto(filePath: string, name?: string): Promise<void> {
-  const url = getPhotoUrl(filePath);
-  try {
-    const res = await fetch(url);
-    const blob = await res.blob();
-    triggerDownload(URL.createObjectURL(blob), name || fileNameFrom(filePath), true);
-  } catch {
-    window.open(url, "_blank", "noopener,noreferrer");
-  }
+// Télécharge une photo via le backend (Content-Disposition: attachment) :
+// simple navigation, donc fiable sur tous les appareils et sans CORS.
+export function downloadPhoto(filePath: string): void {
+  navDownload(`${API_URL}/photos/dl/${filePath}`);
 }
 
-// Récupère plusieurs photos et les empaquette dans un seul fichier .zip.
-export async function downloadPhotosZip(
-  filePaths: string[],
-  zipName = "photos.zip"
-): Promise<void> {
-  const { default: JSZip } = await import("jszip");
-  const zip = new JSZip();
-  const used = new Set<string>();
-
-  await Promise.all(
-    filePaths.map(async (filePath, i) => {
-      const res = await fetch(getPhotoUrl(filePath));
-      const blob = await res.blob();
-      // Évite les collisions de noms dans l'archive.
-      let entry = fileNameFrom(filePath) || `photo-${i + 1}.webp`;
-      if (used.has(entry)) entry = `${i + 1}-${entry}`;
-      used.add(entry);
-      zip.file(entry, blob);
-    })
-  );
-
-  const content = await zip.generateAsync({ type: "blob" });
-  triggerDownload(URL.createObjectURL(content), zipName, true);
+// Télécharge un lot de photos dans un .zip généré et streamé par le backend.
+// On passe par un POST « navigable » (formulaire vers une iframe cachée) pour
+// envoyer une longue liste de fichiers sans limite d'URL ni dépendance au CORS.
+export function downloadPhotosZip(filePaths: string[], zipName = "photos.zip"): void {
+  postDownload(`${API_URL}/photos/zip`, {
+    name: zipName.replace(/\.zip$/i, ""),
+    files: JSON.stringify(filePaths),
+  });
 }
 
-function fileNameFrom(filePath: string): string {
-  return filePath.split("/").pop() || "photo.webp";
-}
-
-function triggerDownload(objectUrl: string, fileName: string, revoke = false): void {
+// Clic synthétique sur un lien : déclenche le téléchargement (le serveur fournit
+// le nom via Content-Disposition) sans quitter la page.
+function navDownload(url: string): void {
   const a = document.createElement("a");
-  a.href = objectUrl;
-  a.download = fileName;
+  a.href = url;
+  a.rel = "noopener";
   document.body.appendChild(a);
   a.click();
   a.remove();
-  if (revoke) URL.revokeObjectURL(objectUrl);
+}
+
+function postDownload(action: string, fields: Record<string, string>): void {
+  const iframe = document.createElement("iframe");
+  iframe.name = `dl-${Date.now()}`;
+  iframe.style.display = "none";
+  document.body.appendChild(iframe);
+
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = action;
+  form.target = iframe.name;
+  form.style.display = "none";
+  for (const [key, value] of Object.entries(fields)) {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = key;
+    input.value = value;
+    form.appendChild(input);
+  }
+
+  document.body.appendChild(form);
+  form.submit();
+
+  // La réponse étant un attachment, la page n'est pas remplacée. On nettoie
+  // après un délai laissant le téléchargement démarrer.
+  window.setTimeout(() => {
+    form.remove();
+    iframe.remove();
+  }, 60000);
 }
 
 export default api;

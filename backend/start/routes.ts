@@ -11,6 +11,7 @@ const AdminPhotosController = () => import('#controllers/admin_photos_controller
 const AdminGuestsController = () => import('#controllers/admin_guests_controller')
 const AdminAlbumsController = () => import('#controllers/admin_albums_controller')
 const PublicAlbumsController = () => import('#controllers/public_albums_controller')
+const DownloadsController = () => import('#controllers/downloads_controller')
 
 router.get('/', async () => {
   return {
@@ -23,6 +24,10 @@ router.get('/', async () => {
 // =======================================================
 // Route Invité pour se connecter (avec la signature)
 router.post('/tables/:id/login', [AuthController, 'login']).as('guest.login')
+
+// Téléchargements (Content-Disposition) — fichiers déjà publics via /uploads
+router.get('/photos/dl/:file', [DownloadsController, 'photo'])
+router.post('/photos/zip', [DownloadsController, 'zip'])
 
 // Album partagé par les mariés : accessible via un simple lien (aucune auth)
 router.get('/albums/shared/:token', [PublicAlbumsController, 'show'])
