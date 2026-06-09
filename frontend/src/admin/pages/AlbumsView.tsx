@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Plus,
   Link2,
-  Check,
   Trash2,
   Images,
   Eye,
@@ -13,9 +12,8 @@ import {
 import { toast } from "sonner";
 import {
   adminAlbumService,
-  adminPhotoService,
   type AdminAlbum,
-  type AdminPhoto,
+  type AlbumPhotoLite,
 } from "../adminApi";
 import { Btn, Card, Pill, Topbar } from "../ui";
 import { getPhotoUrl } from "../../services/api";
@@ -25,7 +23,7 @@ export default function AlbumsView() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [newTitle, setNewTitle] = useState("");
-  // Album en cours d'édition de sa sélection de photos (null = panneau fermé)
+  // Album ouvert en consultation (null = aucun). On y voit uniquement ses photos.
   const [editing, setEditing] = useState<AdminAlbum | null>(null);
 
   const load = async () => {
@@ -51,8 +49,7 @@ export default function AlbumsView() {
       setAlbums((a) => [album, ...a]);
       setNewTitle("");
       setCreating(false);
-      toast.success("Album créé");
-      setEditing(album); // on enchaîne directement sur la sélection des photos
+      toast.success("Album créé — ajoute des photos depuis la galerie");
     } catch {
       toast.error("Création impossible");
     }
@@ -162,13 +159,12 @@ export default function AlbumsView() {
       </div>
 
       {editing && (
-        <PhotoPicker
+        <AlbumDetail
           album={editing}
           onClose={() => setEditing(null)}
-          onSaved={(updated) => {
-            setAlbums((a) => a.map((x) => (x.id === updated.id ? updated : x)));
-            setEditing(null);
-          }}
+          onChanged={(updated) =>
+            setAlbums((a) => a.map((x) => (x.id === updated.id ? updated : x)))
+          }
         />
       )}
     </div>
@@ -262,57 +258,55 @@ function AlbumCard({
   );
 }
 
-// Panneau plein écran : sélection des photos qui composent l'album.
-function PhotoPicker({
+// Vue détail : uniquement les photos qui composent l'album. Les ajouts se font
+// depuis la galerie (bouton « Ajouter à un album ») ; ici on peut juste retirer.
+function AlbumDetail({
   album,
   onClose,
-  onSaved,
+  onChanged,
 }: {
   album: AdminAlbum;
   onClose: () => void;
-  onSaved: (album: AdminAlbum) => void;
+  onChanged: (album: AdminAlbum) => void;
 }) {
-  const [photos, setPhotos] = useState<AdminPhoto[]>([]);
-  const [selected, setSelected] = useState<Set<number>>(new Set(album.photoIds));
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [onlyFavs, setOnlyFavs] = useState(false);
+  const [photos, setPhotos] = useState<AlbumPhotoLite[]>(album.photos ?? []);
+  const [loading, setLoading] = useState(album.photos === undefined);
 
   useEffect(() => {
+    if (album.photos !== undefined) {
+      setPhotos(album.photos);
+      return;
+    }
     (async () => {
       try {
-        setPhotos(await adminPhotoService.getAll());
+        const full = await adminAlbumService.get(album.id);
+        setPhotos(full.photos ?? []);
       } catch {
-        toast.error("Impossible de charger les photos");
+        toast.error("Impossible de charger l'album");
       } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [album.id, album.photos]);
 
-  const visible = useMemo(
-    () => (onlyFavs ? photos.filter((p) => p.starred) : photos),
-    [photos, onlyFavs]
-  );
-
-  const toggle = (id: number) =>
-    setSelected((s) => {
-      const n = new Set(s);
-      n.has(id) ? n.delete(id) : n.add(id);
-      return n;
-    });
-
-  const save = async () => {
-    setSaving(true);
+  const removePhoto = async (photoId: number) => {
+    const remaining = photos.filter((p) => p.id !== photoId);
     try {
-      const updated = await adminAlbumService.setPhotos(album.id, [...selected]);
-      toast.success("Album mis à jour");
-      onSaved(updated);
+      const updated = await adminAlbumService.setPhotos(
+        album.id,
+        remaining.map((p) => p.id)
+      );
+      setPhotos(updated.photos ?? remaining);
+      onChanged(updated);
+      toast.success("Photo retirée de l'album");
     } catch {
-      toast.error("Enregistrement impossible");
-    } finally {
-      setSaving(false);
+      toast.error("Action impossible");
     }
+  };
+
+  const copyLink = () => {
+    navigator.clipboard?.writeText(adminAlbumService.shareUrl(album.shareToken));
+    toast.success("Lien de partage copié");
   };
 
   return (
@@ -320,61 +314,60 @@ function PhotoPicker({
       <div className="bg-white border-b border-line px-8 py-4 flex items-center gap-4">
         <div className="min-w-0">
           <p className="font-semibold text-ink truncate">{album.title}</p>
-          <p className="text-xs text-muted">{selected.size} photo(s) sélectionnée(s)</p>
+          <p className="text-xs text-muted">
+            {photos.length} photo{photos.length > 1 ? "s" : ""}
+          </p>
         </div>
-        <label className="ml-4 flex items-center gap-1.5 text-xs text-ink cursor-pointer">
-          <input
-            type="checkbox"
-            checked={onlyFavs}
-            onChange={(e) => setOnlyFavs(e.target.checked)}
-          />
-          Favoris uniquement
-        </label>
         <div className="ml-auto flex items-center gap-2">
+          <Btn variant="outline" onClick={copyLink} disabled={!album.isPublic}>
+            <Link2 size={16} /> Copier le lien
+          </Btn>
           <Btn variant="ghost" onClick={onClose}>
             <X size={16} /> Fermer
-          </Btn>
-          <Btn variant="primary" onClick={save} disabled={saving}>
-            <Check size={16} /> {saving ? "Enregistrement…" : "Enregistrer"}
           </Btn>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto bg-[color:var(--bg)] p-8">
         {loading ? (
-          <p className="text-sm text-muted">Chargement des photos…</p>
-        ) : visible.length === 0 ? (
-          <p className="text-sm text-muted">Aucune photo disponible.</p>
+          <p className="text-sm text-muted">Chargement de l'album…</p>
+        ) : photos.length === 0 ? (
+          <div className="text-center py-20 text-muted max-w-md mx-auto">
+            <Images size={32} className="mx-auto mb-3" />
+            <p className="text-sm">Cet album est vide.</p>
+            <p className="text-xs mt-1.5">
+              Pour ajouter des photos, ouvre la galerie, sélectionne-les puis
+              utilise « Ajouter à un album ».
+            </p>
+          </div>
         ) : (
           <div className="grid grid-cols-6 gap-3">
-            {visible.map((p) => {
-              const isSel = selected.has(p.id);
-              return (
+            {photos.map((p) => (
+              <div
+                key={p.id}
+                className="group relative aspect-square rounded-lg overflow-hidden border border-line bg-[color:var(--bg)]"
+              >
+                <img
+                  src={getPhotoUrl(p.filePath)}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  alt=""
+                />
                 <button
-                  key={p.id}
-                  onClick={() => toggle(p.id)}
-                  className={`group relative aspect-square rounded-lg overflow-hidden border-2 transition ${
-                    isSel ? "border-momento ring-2 ring-[color:var(--momento-50)]" : "border-line"
-                  }`}
+                  onClick={() => removePhoto(p.id)}
+                  className="absolute top-2 right-2 p-1.5 rounded-full bg-white/90 text-red-600 shadow-sm opacity-0 group-hover:opacity-100 transition hover:bg-white"
+                  aria-label="Retirer de l'album"
+                  title="Retirer de l'album"
                 >
-                  <img
-                    src={getPhotoUrl(p.filePath)}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    alt=""
-                  />
-                  <span
-                    className={`absolute top-2 left-2 w-5 h-5 rounded-full border-2 flex items-center justify-center transition ${
-                      isSel
-                        ? "bg-momento border-momento"
-                        : "bg-white/70 border-white opacity-0 group-hover:opacity-100"
-                    }`}
-                  >
-                    {isSel && <Check size={12} className="text-white" />}
-                  </span>
+                  <Trash2 size={14} />
                 </button>
-              );
-            })}
+                {p.guest && (
+                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-2 pt-6 opacity-0 group-hover:opacity-100 transition">
+                    <p className="text-[11px] text-white truncate">{p.guest.nickname}</p>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>

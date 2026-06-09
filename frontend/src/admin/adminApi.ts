@@ -118,6 +118,12 @@ export interface AdminPhoto {
   mission: { id: number; title: string; isGlobal: boolean } | null;
 }
 
+export interface AlbumPhotoLite {
+  id: number;
+  filePath: string;
+  guest: { nickname: string } | null;
+}
+
 export interface AdminAlbum {
   id: number;
   title: string;
@@ -127,6 +133,9 @@ export interface AdminAlbum {
   photoCount: number;
   coverPath: string | null;
   photoIds: number[];
+  // Présent sur les réponses single-album (show/create/update/setPhotos),
+  // absent sur la liste (index) pour rester léger.
+  photos?: AlbumPhotoLite[];
   createdAt: string;
   updatedAt: string;
 }

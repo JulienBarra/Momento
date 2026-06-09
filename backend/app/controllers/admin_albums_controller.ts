@@ -7,7 +7,7 @@ import Album from '#models/album'
 async function serialize(id: number) {
   const album = await Album.query()
     .where('id', id)
-    .preload('photos', (q) => q.orderBy('photos.created_at', 'desc'))
+    .preload('photos', (q) => q.preload('guest').orderBy('photos.created_at', 'desc'))
     .firstOrFail()
 
   return {
@@ -19,6 +19,12 @@ async function serialize(id: number) {
     photoCount: album.photos.length,
     coverPath: album.photos[0]?.file_path ?? null,
     photoIds: album.photos.map((p) => p.id),
+    // Photos de l'album (la vue détail n'affiche que celles-ci)
+    photos: album.photos.map((p) => ({
+      id: p.id,
+      filePath: p.file_path,
+      guest: p.guest ? { nickname: p.guest.nickname } : null,
+    })),
     createdAt: album.createdAt,
     updatedAt: album.updatedAt,
   }
