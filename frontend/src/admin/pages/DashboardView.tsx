@@ -122,14 +122,14 @@ function Stat({
 function ActivityChart({ buckets }: { buckets: DashboardStats["buckets"] }) {
   const max = Math.max(...buckets.map((b) => b.count), 1);
   // On espace l'affichage des horaires pour qu'ils restent lisibles quel que
-  // soit le nombre de tranches (≈ 7 libellés maximum).
-  const labelStep = Math.max(1, Math.ceil(buckets.length / 7));
+  // soit le nombre de tranches (≈ 12 libellés maximum).
+  const labelStep = Math.max(1, Math.ceil(buckets.length / 12));
   return (
     <Card>
       <div className="flex items-center justify-between mb-5">
         <div>
           <p className="font-semibold text-ink">Activité photo</p>
-          <p className="text-xs text-muted">Par tranches de 30 min</p>
+          <p className="text-xs text-muted">Par heure</p>
         </div>
         <Pill tone="green">
           <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--momento)] pulse-dot" /> En direct

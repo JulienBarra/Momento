@@ -56,7 +56,7 @@ export default class AdminDashboardController {
       target: Math.max(totalGuests, 1),
     }))
 
-    // Buckets d'activité par tranches de 30 min
+    // Buckets d'activité par tranches d'1 h
     const buckets = await this.activityBuckets()
 
     return response.ok({
@@ -75,9 +75,13 @@ export default class AdminDashboardController {
     const rows = await Photo.query().select('created_at').orderBy('created_at', 'asc')
     if (rows.length === 0) return [] as { key: string; count: number }[]
 
-    const slotKey = (dt: DateTime) => `${dt.hour}h${dt.minute < 30 ? '00' : '30'}`
+    // L'événement se déroule en France : on force le fuseau pour que les
+    // horaires affichés correspondent à l'heure locale (le serveur prod tourne
+    // en UTC, sans ça les tranches seraient décalées de l'offset CET/CEST).
+    const ZONE = 'Europe/Paris'
+    const slotKey = (dt: DateTime) => `${dt.hour}h`
     const slotFloor = (dt: DateTime) =>
-      dt.set({ minute: dt.minute < 30 ? 0 : 30, second: 0, millisecond: 0 })
+      dt.setZone(ZONE).set({ minute: 0, second: 0, millisecond: 0 })
 
     const counts = new Map<string, number>()
     let first: DateTime | null = null
@@ -90,14 +94,14 @@ export default class AdminDashboardController {
       counts.set(k, (counts.get(k) ?? 0) + 1)
     }
 
-    // Génère des slots contigus de 30 min entre la première et la dernière photo
+    // Génère des tranches contiguës d'1 h entre la première et la dernière photo
     const out: { key: string; count: number }[] = []
     let cursor = first!
     let guard = 0
     while (cursor <= last! && guard < 200) {
       const k = slotKey(cursor)
       out.push({ key: k, count: counts.get(k) ?? 0 })
-      cursor = cursor.plus({ minutes: 30 })
+      cursor = cursor.plus({ hours: 1 })
       guard++
     }
     return out
