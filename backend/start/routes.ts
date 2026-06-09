@@ -26,6 +26,11 @@ router.post('/tables/:id/login', [AuthController, 'login']).as('guest.login')
 
 // Album partagé par les mariés : accessible via un simple lien (aucune auth)
 router.get('/albums/shared/:token', [PublicAlbumsController, 'show'])
+router.get('/albums/shared/:token/download', [PublicAlbumsController, 'download'])
+router.get('/albums/shared/:token/photos/:photoId/download', [
+  PublicAlbumsController,
+  'downloadPhoto',
+])
 
 // =======================================================
 // 🛡️ ROUTES ADMIN (Bearer ADMIN_TOKEN)

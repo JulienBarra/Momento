@@ -1,7 +1,7 @@
 import { X, Star, Download, Trash2, Globe, Users, Heart } from "lucide-react";
 import type { AdminPhoto } from "../adminApi";
-import { Btn, Pill, formatTime, openPhoto } from "../ui";
-import { getPhotoUrl } from "../../services/api";
+import { Btn, Pill, formatTime } from "../ui";
+import { getPhotoUrl, downloadPhoto } from "../../services/api";
 
 export default function PhotoDetail({
   photo,
@@ -94,8 +94,8 @@ export default function PhotoDetail({
                 {photo.starred ? "Retirer le favori" : "Favori"}
               </Btn>
             )}
-            <Btn variant="outline" onClick={() => openPhoto(url)}>
-              <Download size={14} /> Ouvrir
+            <Btn variant="outline" onClick={() => downloadPhoto(photo.filePath)}>
+              <Download size={14} /> Télécharger
             </Btn>
             {onDelete && (
               <Btn variant="danger" className="col-span-2 justify-center" onClick={onDelete}>

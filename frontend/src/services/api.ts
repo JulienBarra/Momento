@@ -186,6 +186,11 @@ export const albumShareService = {
     const { data } = await api.get<SharedAlbum>(`/albums/shared/${token}`);
     return data;
   },
+  // URLs de téléchargement servies par le backend (Content-Disposition:
+  // attachment) → enregistrement fiable sur tous les appareils, iOS compris.
+  albumDownloadUrl: (token: string): string => `${API_URL}/albums/shared/${token}/download`,
+  photoDownloadUrl: (token: string, photoId: number): string =>
+    `${API_URL}/albums/shared/${token}/photos/${photoId}/download`,
 };
 
 export const getPhotoUrl = (filePath: string): string => {
@@ -194,5 +199,57 @@ export const getPhotoUrl = (filePath: string): string => {
   const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3333";
   return `${apiUrl}/uploads/${filePath}`;
 };
+
+// Déclenche un téléchargement « Enregistrer sous » du fichier sur l'appareil.
+// Repli sur l'ouverture dans un onglet si le fetch cross-origin échoue.
+export async function downloadPhoto(filePath: string, name?: string): Promise<void> {
+  const url = getPhotoUrl(filePath);
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    triggerDownload(URL.createObjectURL(blob), name || fileNameFrom(filePath), true);
+  } catch {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+}
+
+// Récupère plusieurs photos et les empaquette dans un seul fichier .zip.
+export async function downloadPhotosZip(
+  filePaths: string[],
+  zipName = "photos.zip"
+): Promise<void> {
+  const { default: JSZip } = await import("jszip");
+  const zip = new JSZip();
+  const used = new Set<string>();
+
+  await Promise.all(
+    filePaths.map(async (filePath, i) => {
+      const res = await fetch(getPhotoUrl(filePath));
+      const blob = await res.blob();
+      // Évite les collisions de noms dans l'archive.
+      let entry = fileNameFrom(filePath) || `photo-${i + 1}.webp`;
+      if (used.has(entry)) entry = `${i + 1}-${entry}`;
+      used.add(entry);
+      zip.file(entry, blob);
+    })
+  );
+
+  const content = await zip.generateAsync({ type: "blob" });
+  triggerDownload(URL.createObjectURL(content), zipName, true);
+}
+
+function fileNameFrom(filePath: string): string {
+  return filePath.split("/").pop() || "photo.webp";
+}
+
+function triggerDownload(objectUrl: string, fileName: string, revoke = false): void {
+  const a = document.createElement("a");
+  a.href = objectUrl;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  if (revoke) URL.revokeObjectURL(objectUrl);
+}
 
 export default api;

@@ -6,7 +6,6 @@ import {
   Heart,
   Download,
   Check,
-  Share2,
   Images,
   Plus,
   X,
@@ -23,8 +22,8 @@ import {
   type AdminTable,
   type AdminAlbum,
 } from "../adminApi";
-import { Btn, formatTime, openPhoto } from "../ui";
-import { getPhotoUrl } from "../../services/api";
+import { Btn, formatTime } from "../ui";
+import { getPhotoUrl, downloadPhoto, downloadPhotosZip } from "../../services/api";
 import { EVENT } from "../config";
 import PhotoDetail from "../components/PhotoDetail";
 
@@ -45,6 +44,7 @@ export default function CoupleView() {
   const [detail, setDetail] = useState<AdminPhoto | null>(null);
   const [albums, setAlbums] = useState<AdminAlbum[]>([]);
   const [albumPickerOpen, setAlbumPickerOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -135,9 +135,25 @@ export default function CoupleView() {
     }
   };
 
-  const downloadAll = () => filtered.forEach((p) => openPhoto(getPhotoUrl(p.filePath)));
+  // Télécharge un lot sur l'appareil : 1 photo = fichier direct, sinon un .zip.
+  const downloadMany = async (list: AdminPhoto[], zipName: string) => {
+    if (list.length === 0 || downloading) return;
+    setDownloading(true);
+    try {
+      if (list.length === 1) await downloadPhoto(list[0].filePath);
+      else await downloadPhotosZip(list.map((p) => p.filePath), zipName);
+    } catch {
+      toast.error("Téléchargement impossible");
+    } finally {
+      setDownloading(false);
+    }
+  };
+  const downloadAll = () => downloadMany(filtered, "momento-galerie.zip");
   const downloadSelection = () =>
-    photos.filter((p) => selected.has(p.id)).forEach((p) => openPhoto(getPhotoUrl(p.filePath)));
+    downloadMany(
+      photos.filter((p) => selected.has(p.id)),
+      "momento-selection.zip"
+    );
   const favSelection = async () => {
     try {
       await Promise.all(
@@ -173,20 +189,13 @@ export default function CoupleView() {
             <p className="text-sm text-muted mt-3">{EVENT.dateLong}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Btn variant="outline" onClick={() => setOnlyFavs(true)}>
-              <Star size={16} /> Album best-of
-            </Btn>
-            <Btn variant="outline" onClick={downloadAll} disabled={filtered.length === 0}>
-              <Download size={16} /> Tout ouvrir ({filtered.length})
-            </Btn>
             <Btn
               variant="dark"
-              onClick={() => {
-                navigator.clipboard?.writeText(window.location.href);
-                toast.success("Lien copié");
-              }}
+              onClick={downloadAll}
+              disabled={filtered.length === 0 || downloading}
             >
-              <Share2 size={16} /> Partager
+              <Download size={16} />{" "}
+              {downloading ? "Préparation…" : `Tout télécharger (${filtered.length})`}
             </Btn>
           </div>
         </div>
@@ -276,10 +285,11 @@ export default function CoupleView() {
           </span>
           <div className="ml-auto flex items-center gap-1.5">
             <button
-              className="text-xs px-2.5 py-1.5 rounded-md hover:bg-white/10 flex items-center gap-1.5"
+              className="text-xs px-2.5 py-1.5 rounded-md hover:bg-white/10 flex items-center gap-1.5 disabled:opacity-50"
               onClick={downloadSelection}
+              disabled={downloading}
             >
-              <Download size={14} /> Ouvrir
+              <Download size={14} /> {downloading ? "Préparation…" : "Télécharger"}
             </button>
             <button
               className="text-xs px-2.5 py-1.5 rounded-md hover:bg-white/10 flex items-center gap-1.5"

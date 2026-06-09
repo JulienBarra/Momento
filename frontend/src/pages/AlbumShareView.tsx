@@ -8,26 +8,6 @@ import {
   type SharedPhoto,
 } from "../services/api";
 
-// Force le téléchargement d'une photo (récupère le binaire puis crée un lien).
-async function downloadPhoto(photo: SharedPhoto) {
-  const url = getPhotoUrl(photo.filePath);
-  try {
-    const res = await fetch(url);
-    const blob = await res.blob();
-    const objectUrl = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = objectUrl;
-    a.download = photo.filePath.split("/").pop() || `photo-${photo.id}.webp`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(objectUrl);
-  } catch {
-    // Repli : ouvre dans un onglet si le téléchargement direct échoue
-    window.open(url, "_blank", "noopener,noreferrer");
-  }
-}
-
 export default function AlbumShareView() {
   const { token } = useParams<{ token: string }>();
   const [album, setAlbum] = useState<SharedAlbum | null>(null);
@@ -79,6 +59,14 @@ export default function AlbumShareView() {
         <p className="text-xs text-gray-400 mt-3">
           {album.photos.length} photo{album.photos.length > 1 ? "s" : ""}
         </p>
+        {album.photos.length > 0 && (
+          <a
+            href={albumShareService.albumDownloadUrl(token ?? "")}
+            className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-momento text-white text-sm font-medium hover:opacity-90"
+          >
+            <Download size={15} /> Télécharger l'album
+          </a>
+        )}
       </header>
 
       <main className="max-w-5xl mx-auto p-4 sm:p-6">
@@ -101,13 +89,13 @@ export default function AlbumShareView() {
                     alt=""
                   />
                 </button>
-                <button
-                  onClick={() => downloadPhoto(p)}
+                <a
+                  href={albumShareService.photoDownloadUrl(token ?? "", p.id)}
                   className="absolute bottom-2 right-2 p-2 rounded-full bg-white/90 text-gray-800 shadow-sm opacity-0 group-hover:opacity-100 transition hover:bg-white"
                   aria-label="Télécharger"
                 >
                   <Download size={15} />
-                </button>
+                </a>
               </div>
             ))}
           </div>
@@ -138,12 +126,12 @@ export default function AlbumShareView() {
             {lightbox.guest && (
               <span className="text-white/80 text-sm">Par {lightbox.guest.nickname}</span>
             )}
-            <button
-              onClick={() => downloadPhoto(lightbox)}
+            <a
+              href={albumShareService.photoDownloadUrl(token ?? "", lightbox.id)}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white text-gray-900 text-sm font-medium hover:bg-gray-100"
             >
               <Download size={15} /> Télécharger
-            </button>
+            </a>
           </div>
         </div>
       )}
