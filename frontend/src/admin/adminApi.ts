@@ -118,6 +118,25 @@ export interface AdminPhoto {
   mission: { id: number; title: string; isGlobal: boolean } | null;
 }
 
+export interface AdminAlbum {
+  id: number;
+  title: string;
+  description: string | null;
+  shareToken: string;
+  isPublic: boolean;
+  photoCount: number;
+  coverPath: string | null;
+  photoIds: number[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AlbumPayload {
+  title?: string;
+  description?: string | null;
+  isPublic?: boolean;
+}
+
 export interface DashboardStats {
   photos: { total: number; lastHour: number };
   guests: { connected: number };
@@ -215,4 +234,32 @@ export const adminPhotoService = {
   remove: async (id: number): Promise<void> => {
     await adminApi.delete(`/admin/photos/${id}`);
   },
+};
+
+export const adminAlbumService = {
+  getAll: async (): Promise<AdminAlbum[]> => {
+    const { data } = await adminApi.get<AdminAlbum[]>("/admin/albums");
+    return data;
+  },
+  get: async (id: number): Promise<AdminAlbum> => {
+    const { data } = await adminApi.get<AdminAlbum>(`/admin/albums/${id}`);
+    return data;
+  },
+  create: async (payload: { title: string; description?: string | null }): Promise<AdminAlbum> => {
+    const { data } = await adminApi.post<AdminAlbum>("/admin/albums", payload);
+    return data;
+  },
+  update: async (id: number, payload: AlbumPayload): Promise<AdminAlbum> => {
+    const { data } = await adminApi.patch<AdminAlbum>(`/admin/albums/${id}`, payload);
+    return data;
+  },
+  setPhotos: async (id: number, photoIds: number[]): Promise<AdminAlbum> => {
+    const { data } = await adminApi.put<AdminAlbum>(`/admin/albums/${id}/photos`, { photoIds });
+    return data;
+  },
+  remove: async (id: number): Promise<void> => {
+    await adminApi.delete(`/admin/albums/${id}`);
+  },
+  // Lien public à partager (construit côté client à partir du jeton).
+  shareUrl: (shareToken: string): string => `${window.location.origin}/album/${shareToken}`,
 };

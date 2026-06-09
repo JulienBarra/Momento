@@ -5,6 +5,7 @@ import {
   LayoutGrid,
   Users,
   Image as ImageIcon,
+  Images,
   Target,
   QrCode,
   Heart,
@@ -29,12 +30,18 @@ const SECTIONS_ADMIN: Section[] = [
 ];
 const SECTIONS_COUPLE: Section[] = [
   { id: "couple", label: "Galerie", to: "/admin/couple", icon: Heart },
+  { id: "albums", label: "Albums", to: "/admin/albums", icon: Images },
 ];
+
+// Préfixes appartenant à l'espace « Mariés »
+const COUPLE_PREFIXES = ["/admin/couple", "/admin/albums"];
 
 function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const space: "admin" | "couple" = location.pathname.startsWith("/admin/couple")
+  const space: "admin" | "couple" = COUPLE_PREFIXES.some((p) =>
+    location.pathname.startsWith(p)
+  )
     ? "couple"
     : "admin";
   const sections = space === "admin" ? SECTIONS_ADMIN : SECTIONS_COUPLE;

@@ -167,6 +167,27 @@ export const missionService = {
   },
 };
 
+// ---- Albums partagés (vue publique, sans authentification) ----
+export interface SharedPhoto {
+  id: number;
+  filePath: string;
+  createdAt: string;
+  guest: { nickname: string } | null;
+}
+
+export interface SharedAlbum {
+  title: string;
+  description: string | null;
+  photos: SharedPhoto[];
+}
+
+export const albumShareService = {
+  get: async (token: string): Promise<SharedAlbum> => {
+    const { data } = await api.get<SharedAlbum>(`/albums/shared/${token}`);
+    return data;
+  },
+};
+
 export const getPhotoUrl = (filePath: string): string => {
   if (!filePath) return filePath;
   if (/^https?:\/\//i.test(filePath)) return filePath;

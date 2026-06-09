@@ -9,6 +9,8 @@ const AdminMissionsController = () => import('#controllers/admin_missions_contro
 const AdminDashboardController = () => import('#controllers/admin_dashboard_controller')
 const AdminPhotosController = () => import('#controllers/admin_photos_controller')
 const AdminGuestsController = () => import('#controllers/admin_guests_controller')
+const AdminAlbumsController = () => import('#controllers/admin_albums_controller')
+const PublicAlbumsController = () => import('#controllers/public_albums_controller')
 
 router.get('/', async () => {
   return {
@@ -21,6 +23,9 @@ router.get('/', async () => {
 // =======================================================
 // Route Invité pour se connecter (avec la signature)
 router.post('/tables/:id/login', [AuthController, 'login']).as('guest.login')
+
+// Album partagé par les mariés : accessible via un simple lien (aucune auth)
+router.get('/albums/shared/:token', [PublicAlbumsController, 'show'])
 
 // =======================================================
 // 🛡️ ROUTES ADMIN (Bearer ADMIN_TOKEN)
@@ -52,6 +57,14 @@ router
     router.get('/photos', [AdminPhotosController, 'index'])
     router.patch('/photos/:id', [AdminPhotosController, 'update'])
     router.delete('/photos/:id', [AdminPhotosController, 'destroy'])
+
+    // -- Albums (CRUD + gestion des photos + lien de partage) --
+    router.get('/albums', [AdminAlbumsController, 'index'])
+    router.post('/albums', [AdminAlbumsController, 'store'])
+    router.get('/albums/:id', [AdminAlbumsController, 'show'])
+    router.patch('/albums/:id', [AdminAlbumsController, 'update'])
+    router.put('/albums/:id/photos', [AdminAlbumsController, 'setPhotos'])
+    router.delete('/albums/:id', [AdminAlbumsController, 'destroy'])
 
     // -- Tableau de bord --
     router.get('/stats', [AdminDashboardController, 'stats'])

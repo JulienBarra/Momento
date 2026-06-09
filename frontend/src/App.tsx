@@ -17,12 +17,17 @@ import PhotosAdminView from "./admin/pages/PhotosView";
 import MissionsAdminView from "./admin/pages/MissionsView";
 import QRCodesView from "./admin/pages/QRCodesView";
 import CoupleView from "./admin/pages/CoupleView";
+import AlbumsView from "./admin/pages/AlbumsView";
+import AlbumShareView from "./pages/AlbumShareView";
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          {/* Vue publique d'un album partagé (accessible via le lien généré) */}
+          <Route path="/album/:token" element={<AlbumShareView />} />
+
           {/* Route publique pour scanner le QR Code */}
           <Route
             path="/join"
@@ -59,6 +64,7 @@ function App() {
               <Route path="photos" element={<PhotosAdminView />} />
               <Route path="missions" element={<MissionsAdminView />} />
               <Route path="qr" element={<QRCodesView />} />
+              <Route path="albums" element={<AlbumsView />} />
               <Route path="couple" element={<CoupleView />} />
             </Route>
           </Route>
