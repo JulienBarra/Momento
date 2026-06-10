@@ -8,6 +8,7 @@ function serialize(m: Mission, totalGuests: number) {
   return {
     id: m.id,
     title: m.title,
+    description: m.description,
     isGlobal: m.isGlobal,
     tableId: m.tableId,
     table: m.table ? { id: m.table.id, name: m.table.name } : null,
@@ -37,6 +38,8 @@ export default class AdminMissionsController {
   // POST /admin/missions  { title, isGlobal, tableId?, applyToAllTables? }
   async store({ request, response }: HttpContext) {
     const title = request.input('title')?.trim()
+    const descriptionInput = request.input('description')
+    const description = descriptionInput != null ? String(descriptionInput).trim() || null : null
     const isGlobal = Boolean(request.input('isGlobal'))
     const applyToAllTables = Boolean(request.input('applyToAllTables'))
 
@@ -45,7 +48,7 @@ export default class AdminMissionsController {
     }
 
     if (isGlobal) {
-      const mission = await Mission.create({ title, isGlobal: true, tableId: null })
+      const mission = await Mission.create({ title, description, isGlobal: true, tableId: null })
       return response.created(await this.one(mission.id))
     }
 
@@ -56,7 +59,7 @@ export default class AdminMissionsController {
         return response.badRequest({ error: 'Aucune table à laquelle appliquer la mission' })
       }
       const created = await Mission.createMany(
-        tables.map((t) => ({ title, isGlobal: false, tableId: t.id }))
+        tables.map((t) => ({ title, description, isGlobal: false, tableId: t.id }))
       )
       const ids = created.map((m) => m.id)
       const all = await Mission.query().whereIn('id', ids).preload('table').withCount('photos')
@@ -68,7 +71,7 @@ export default class AdminMissionsController {
     if (!table) {
       return response.badRequest({ error: 'Table introuvable pour cette mission' })
     }
-    const mission = await Mission.create({ title, isGlobal: false, tableId })
+    const mission = await Mission.create({ title, description, isGlobal: false, tableId })
     return response.created(await this.one(mission.id))
   }
 
@@ -84,6 +87,11 @@ export default class AdminMissionsController {
       const trimmed = String(title).trim()
       if (!trimmed) return response.badRequest({ error: 'L’intitulé ne peut pas être vide' })
       mission.title = trimmed
+    }
+
+    if (request.input('description') !== undefined) {
+      const desc = request.input('description')
+      mission.description = desc != null ? String(desc).trim() || null : null
     }
 
     if (request.input('isGlobal') !== undefined) {

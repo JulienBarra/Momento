@@ -212,6 +212,11 @@ export default function Missions() {
                   </div>
                   <div className="flex-1">
                     <p className="text-black font-semibold">{mission.title}</p>
+                    {mission.description && (
+                      <p className="text-sm text-gray-400 italic mt-0.5">
+                        {mission.description}
+                      </p>
+                    )}
                     <span className="inline-flex items-center gap-1 text-xs text-momento mt-1">
                       <Globe size={10} />
                       Tout le monde
@@ -252,6 +257,11 @@ export default function Missions() {
                   </div>
                   <div className="flex-1">
                     <p className="text-black font-semibold">{mission.title}</p>
+                    {mission.description && (
+                      <p className="text-sm text-gray-400 italic mt-0.5">
+                        {mission.description}
+                      </p>
+                    )}
                     <span className="inline-flex items-center gap-1 text-xs text-purple-600 mt-1">
                       <Users size={10} />
                       {mission.table?.name ?? `Table ${mission.tableId}`}

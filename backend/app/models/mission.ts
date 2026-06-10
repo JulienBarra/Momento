@@ -12,6 +12,9 @@ export default class Mission extends BaseModel {
   declare title: string
 
   @column()
+  declare description: string | null
+
+  @column()
   declare isGlobal: boolean
 
   @column()

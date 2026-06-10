@@ -91,6 +91,7 @@ export interface Photo {
 export interface Mission {
   id: number;
   title: string;
+  description: string | null;
   isGlobal: boolean;
   tableId: number | null;
   table?: Table | null;

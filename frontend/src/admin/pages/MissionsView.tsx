@@ -72,7 +72,12 @@ export default function MissionsView() {
       await Promise.all(
         source.flatMap((m) =>
           targets.map((t) =>
-            adminMissionService.create({ title: m.title, isGlobal: false, tableId: t.id })
+            adminMissionService.create({
+              title: m.title,
+              description: m.description,
+              isGlobal: false,
+              tableId: t.id,
+            })
           )
         )
       );
@@ -386,6 +391,7 @@ function MissionEditor({
   onSaved: () => void;
 }) {
   const [title, setTitle] = useState(mission?.title ?? "");
+  const [description, setDescription] = useState(mission?.description ?? "");
   const [isGlobal, setIsGlobal] = useState(mission ? mission.isGlobal : defaultTable === null);
   const [tableId, setTableId] = useState<number>(
     mission?.tableId ?? defaultTable ?? tables[0]?.id ?? 0
@@ -396,11 +402,13 @@ function MissionEditor({
   const save = async () => {
     const trimmed = title.trim();
     if (!trimmed) return;
+    const desc = description.trim() || null;
     setSaving(true);
     try {
       if (mission) {
         await adminMissionService.update(mission.id, {
           title: trimmed,
+          description: desc,
           isGlobal,
           tableId: isGlobal ? null : tableId,
         });
@@ -408,6 +416,7 @@ function MissionEditor({
       } else {
         await adminMissionService.create({
           title: trimmed,
+          description: desc,
           isGlobal,
           tableId: isGlobal ? null : tableId,
           applyToAllTables: !isGlobal && applyAll,
@@ -447,6 +456,18 @@ function MissionEditor({
               placeholder="Capturez les mariés en train de s'embrasser"
               autoFocus
               className="w-full text-sm border border-line rounded-lg px-3 py-2.5 focus:outline-none focus:border-[color:var(--momento)]"
+            />
+          </div>
+          <div>
+            <label className="text-[11px] uppercase tracking-wider text-muted font-medium block mb-1.5">
+              Description <span className="text-muted/60 normal-case">(optionnel)</span>
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Petite blague ou précision affichée sous le titre"
+              rows={2}
+              className="w-full text-sm border border-line rounded-lg px-3 py-2.5 resize-none focus:outline-none focus:border-[color:var(--momento)]"
             />
           </div>
           <div>

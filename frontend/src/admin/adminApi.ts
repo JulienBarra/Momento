@@ -89,6 +89,7 @@ export interface QrLinkResponse {
 export interface AdminMission {
   id: number;
   title: string;
+  description: string | null;
   isGlobal: boolean;
   tableId: number | null;
   table: { id: number; name: string } | null;
@@ -100,6 +101,7 @@ export interface AdminMission {
 
 export interface MissionPayload {
   title: string;
+  description?: string | null;
   isGlobal: boolean;
   tableId?: number | null;
   applyToAllTables?: boolean;
