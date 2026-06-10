@@ -10,7 +10,7 @@ import env from '#start/env'
 const corsConfig = defineConfig({
   enabled: true,
   origin: env.get('NODE_ENV') === 'production' ? [env.get('FRONTEND_URL')] : true,
-  methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'],
   headers: true,
   exposeHeaders: [],
   credentials: true,
