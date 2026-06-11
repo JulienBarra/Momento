@@ -117,7 +117,7 @@ export interface AdminPhoto {
   createdAt: string;
   guest: { id: number; nickname: string } | null;
   table: { id: number; name: string } | null;
-  mission: { id: number; title: string; isGlobal: boolean } | null;
+  mission: { id: number; title: string; description: string | null; isGlobal: boolean } | null;
 }
 
 export interface AlbumPhotoLite {

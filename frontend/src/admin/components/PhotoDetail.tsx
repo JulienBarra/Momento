@@ -59,6 +59,9 @@ export default function PhotoDetail({
                   }`}
                 >
                   <p className="text-sm font-semibold text-ink">{m.title}</p>
+                  {m.description && (
+                    <p className="text-xs text-muted mt-1 leading-relaxed">{m.description}</p>
+                  )}
                   <Pill tone={m.isGlobal ? "green" : "purple"} className="mt-2">
                     {m.isGlobal ? (
                       <>

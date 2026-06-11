@@ -13,7 +13,14 @@ function serialize(p: Photo) {
     createdAt: p.createdAt,
     guest: p.guest ? { id: p.guest.id, nickname: p.guest.nickname } : null,
     table: p.table ? { id: p.table.id, name: p.table.name } : null,
-    mission: p.mission ? { id: p.mission.id, title: p.mission.title, isGlobal: p.mission.isGlobal } : null,
+    mission: p.mission
+      ? {
+          id: p.mission.id,
+          title: p.mission.title,
+          description: p.mission.description,
+          isGlobal: p.mission.isGlobal,
+        }
+      : null,
   }
 }
 
