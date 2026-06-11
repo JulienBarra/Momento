@@ -10,9 +10,13 @@ interface PhotoModalProps {
 }
 
 export default function PhotoModal({ photo, onClose, getMissionTitle, isMissionGlobal, getTableName }: PhotoModalProps) {
-  const missionTitle = getMissionTitle(photo.missionId);
-  const isGlobal = isMissionGlobal(photo.missionId);
+  // La relation `mission` est préchargée par le backend pour chaque photo, donc
+  // elle est disponible même pour les missions des autres tables. On l'utilise en
+  // priorité et on retombe sur les helpers (liste locale) si besoin.
+  const missionTitle = photo.mission?.title ?? getMissionTitle(photo.missionId);
+  const isGlobal = photo.mission?.isGlobal ?? isMissionGlobal(photo.missionId);
   const tableName = getTableName(photo.tableId);
+  const missionDescription = photo.mission?.description ?? null;
 
   return (
     <div
@@ -64,6 +68,9 @@ export default function PhotoModal({ photo, onClose, getMissionTitle, isMissionG
                     Mission globale accomplie
                   </p>
                   <p className="text-black font-medium">{missionTitle}</p>
+                  {missionDescription && (
+                    <p className="text-gray-500 text-sm italic mt-1">{missionDescription}</p>
+                  )}
                 </div>
               </div>
             ) : (
@@ -75,6 +82,9 @@ export default function PhotoModal({ photo, onClose, getMissionTitle, isMissionG
                     Mission de table accomplie
                   </p>
                   <p className="text-black font-medium">{missionTitle}</p>
+                  {missionDescription && (
+                    <p className="text-gray-500 text-sm italic mt-1">{missionDescription}</p>
+                  )}
                 </div>
               </div>
             )
