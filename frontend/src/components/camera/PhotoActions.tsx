@@ -1,4 +1,5 @@
 import { RefreshCw, Send } from "lucide-react";
+import { MAX_UPLOAD_RETRIES } from "../../constants/camera";
 
 interface PhotoActionsProps {
   isUploading: boolean;
@@ -30,7 +31,7 @@ export default function PhotoActions({
           <>
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             {uploadRetryCount > 0
-              ? `Tentative ${uploadRetryCount}/3...`
+              ? `Tentative ${uploadRetryCount}/${MAX_UPLOAD_RETRIES}...`
               : "Envoi..."}
           </>
         ) : (
