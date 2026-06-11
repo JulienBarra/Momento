@@ -17,7 +17,13 @@ export default class PublicAlbumsController {
     const album = await Album.query()
       .where('share_token', params.token)
       .where('is_public', true)
-      .preload('photos', (q) => q.preload('guest').orderBy('photos.created_at', 'desc'))
+      .preload('photos', (q) =>
+        q
+          .preload('guest')
+          .preload('mission')
+          .preload('table')
+          .orderBy('photos.created_at', 'desc')
+      )
       .first()
 
     if (!album) {
@@ -34,6 +40,14 @@ export default class PublicAlbumsController {
         filePath: p.file_path,
         createdAt: p.createdAt,
         guest: p.guest ? { nickname: p.guest.nickname } : null,
+        mission: p.mission
+          ? {
+              title: p.mission.title,
+              description: p.mission.description,
+              isGlobal: p.mission.isGlobal,
+            }
+          : null,
+        table: p.table ? { name: p.table.name } : null,
       })),
     })
   }

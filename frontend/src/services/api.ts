@@ -174,6 +174,8 @@ export interface SharedPhoto {
   filePath: string;
   createdAt: string;
   guest: { nickname: string } | null;
+  mission: { title: string; description: string | null; isGlobal: boolean } | null;
+  table: { name: string } | null;
 }
 
 export interface SharedAlbum {

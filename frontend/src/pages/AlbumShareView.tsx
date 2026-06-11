@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Download, X, ImageOff, Loader2 } from "lucide-react";
+import { Download, X, ImageOff, Loader2, CheckCircle2, Heart } from "lucide-react";
 import {
   albumShareService,
   getPhotoUrl,
@@ -104,34 +104,99 @@ export default function AlbumShareView() {
 
       {lightbox && (
         <div
-          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 overflow-y-auto"
           onClick={() => setLightbox(null)}
         >
-          <button
-            className="absolute top-4 right-4 p-2 text-white/80 hover:text-white"
-            onClick={() => setLightbox(null)}
-          >
-            <X size={24} />
-          </button>
-          <img
-            src={getPhotoUrl(lightbox.filePath)}
-            className="max-h-[85vh] max-w-full object-contain rounded"
-            alt=""
-            onClick={(e) => e.stopPropagation()}
-          />
+          {/* Card photo + infos, dans l'esprit de la modale de l'app */}
           <div
-            className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3"
+            className="bg-white rounded-2xl overflow-hidden max-w-lg w-full shadow-2xl my-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            {lightbox.guest && (
-              <span className="text-white/80 text-sm">Par {lightbox.guest.nickname}</span>
-            )}
-            <a
-              href={albumShareService.photoDownloadUrl(token ?? "", lightbox.id)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white text-gray-900 text-sm font-medium hover:bg-gray-100"
+            <button
+              onClick={() => setLightbox(null)}
+              className="absolute top-6 right-6 z-10 bg-black/50 backdrop-blur-sm text-white p-2 rounded-full hover:bg-black/70 transition-colors"
+              aria-label="Fermer"
             >
-              <Download size={15} /> Télécharger
-            </a>
+              <X size={20} />
+            </button>
+
+            {/* Image */}
+            <div className="relative aspect-square bg-gray-100">
+              <img
+                src={getPhotoUrl(lightbox.filePath)}
+                className="w-full h-full object-cover"
+                alt={`Photo par ${lightbox.guest?.nickname || "Anonyme"}`}
+              />
+            </div>
+
+            {/* Infos */}
+            <div className="p-6">
+              <div className="mb-3">
+                <p className="text-black text-xl font-bold">
+                  {lightbox.guest?.nickname || "Anonyme"}
+                </p>
+                {lightbox.table && (
+                  <p className="text-gray-500 text-sm italic mt-1">
+                    de la table{" "}
+                    <span className="font-bold text-black not-italic">{lightbox.table.name}</span>
+                  </p>
+                )}
+              </div>
+
+              {lightbox.mission ? (
+                lightbox.mission.isGlobal ? (
+                  // Mission globale → Bloc vert
+                  <div className="flex items-start gap-3 bg-momento/10 rounded-lg p-4">
+                    <CheckCircle2 size={20} className="text-momento flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-xs font-medium text-momento/70 uppercase tracking-wide mb-1">
+                        Mission globale accomplie
+                      </p>
+                      <p className="text-black font-medium">{lightbox.mission.title}</p>
+                      {lightbox.mission.description && (
+                        <p className="text-gray-500 text-sm italic mt-1">
+                          {lightbox.mission.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  // Mission de table → Bloc violet
+                  <div className="flex items-start gap-3 bg-purple-50 rounded-lg p-4">
+                    <CheckCircle2 size={20} className="text-purple-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-xs font-medium text-purple-600/70 uppercase tracking-wide mb-1">
+                        Mission de table accomplie
+                      </p>
+                      <p className="text-black font-medium">{lightbox.mission.title}</p>
+                      {lightbox.mission.description && (
+                        <p className="text-gray-500 text-sm italic mt-1">
+                          {lightbox.mission.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )
+              ) : (
+                // Photo spontanée → Bloc rouge
+                <div className="flex items-start gap-3 bg-red-50 rounded-lg p-4">
+                  <Heart size={20} className="text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" />
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-red-500/70 uppercase tracking-wide mb-1">
+                      Photo spontanée
+                    </p>
+                    <p className="text-black font-medium">Photo capturée pour le plaisir</p>
+                  </div>
+                </div>
+              )}
+
+              <a
+                href={albumShareService.photoDownloadUrl(token ?? "", lightbox.id)}
+                className="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-momento text-white text-sm font-medium hover:opacity-90"
+              >
+                <Download size={15} /> Télécharger
+              </a>
+            </div>
           </div>
         </div>
       )}
