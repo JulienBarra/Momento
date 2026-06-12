@@ -5,9 +5,10 @@ export const VIDEO_CONSTRAINTS = {
   aspectRatio: { ideal: 16 / 9 },
 } as const;
 
-// Compression de l'image capturée
-export const MAX_PHOTO_WIDTH = 1920;
-export const MAX_PHOTO_HEIGHT = 1080;
+// Compression de l'image capturée — limites sur le grand et le petit côté
+// (indépendant de l'orientation portrait/paysage)
+export const MAX_PHOTO_LONG_EDGE = 1920;
+export const MAX_PHOTO_SHORT_EDGE = 1080;
 export const PHOTO_QUALITY = 0.92;
 export const PHOTO_FORMAT = "image/webp";
 
