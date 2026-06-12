@@ -8,7 +8,7 @@ export const VIDEO_CONSTRAINTS = {
 // Compression de l'image capturée
 export const MAX_PHOTO_WIDTH = 1920;
 export const MAX_PHOTO_HEIGHT = 1080;
-export const PHOTO_QUALITY = 0.85;
+export const PHOTO_QUALITY = 0.92;
 export const PHOTO_FORMAT = "image/webp";
 
 // Upload
