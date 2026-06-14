@@ -200,7 +200,11 @@ function GlobalList({
             </div>
             <div className="min-w-0">
               <p className="font-medium text-ink text-sm truncate">{m.title}</p>
-              <p className="text-xs text-muted">Proposée à tous</p>
+              {m.description ? (
+                <p className="text-xs text-muted line-clamp-2">{m.description}</p>
+              ) : (
+                <p className="text-xs text-muted">Proposée à tous</p>
+              )}
             </div>
             <div className="w-40">
               <div className="flex items-center justify-between mb-1">
@@ -325,6 +329,9 @@ function TableTab({
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-ink truncate">{m.title}</p>
+                    {m.description && (
+                      <p className="text-xs text-muted line-clamp-2 mt-0.5">{m.description}</p>
+                    )}
                     <div className="flex items-center gap-2 mt-0.5">
                       <Pill tone={done ? "green" : "purple"}>
                         {done ? (
